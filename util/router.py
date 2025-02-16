@@ -14,7 +14,7 @@ class Router:
             'action': action,
             'exact_path': exact_path
         })
-        return self
+
 
     def route_request(self, request, handler):
         method = request.method
@@ -25,7 +25,8 @@ class Router:
                 if (route['exact_path'] and path == route['path']) or (
                         not route['exact_path'] and path.startswith(route['path'])):
                     route['action'](request, handler)
-                    return self
+                    return
+
 
         #If there is no path matching the request, send a 404 Not Found response over the handler.
         res = Response()
