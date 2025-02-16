@@ -16,3 +16,6 @@ else:
 db = mongo_client["cse312"]
 
 chat_collection = db["chat"]
+
+
+
