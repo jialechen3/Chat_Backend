@@ -74,9 +74,9 @@ class Response:
         response_lines.append("\r\n")
 
         response_header = "".join(response_lines)
-
+        print(response_header.encode('utf-8'))
         response_bytes = response_header.encode('utf-8') + self.body
-
+        #print(response_bytes)
         return response_bytes
 
 

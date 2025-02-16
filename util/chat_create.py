@@ -36,7 +36,7 @@ def chat_create(request, handler):
     if session_cookie == 'empty':
         session_cookie = uuid.uuid4()
         author = str(session_cookie)
-        cookie_str = author + "; Expires=Wed, 21 Oct 2025 07:28:00 GMT; HttpOnly; Secure"
+        cookie_str = author + "; Expires=Wed, 21 Oct 2025 07:28:00 GMT; Secure"
         res.cookies({"session": cookie_str})
         chat_collection.insert_one({
             "author": author,
