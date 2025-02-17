@@ -37,13 +37,13 @@ class Response:
         return self
 
     def text(self, data: str):
-        self.body += data.encode()
+        self.body += data.encode('utf-8')
         self.heads.update({"Content-Type": "text/plain; charset=utf-8"})
         #print('hello is in the response.text()')
         return self
 
 
-    def json(self, data):
+    def json(self, data:list):
         self.body = json.dumps(data).encode('utf-8')
         self.heads.update({"Content-Type": "application/json"})
         return self
@@ -76,7 +76,7 @@ class Response:
         response_header = "".join(response_lines)
         print(response_header.encode('utf-8'))
         response_bytes = response_header.encode('utf-8') + self.body
-        print(response_bytes)
+        #print(response_bytes)
         return response_bytes
 
 
@@ -95,18 +95,11 @@ def test1():
 
 def test2():
     res = Response()
-    #h = {"Content-Type": "image/x-icon"}
-    #res.headers(h)
-    res.text('the first text')
-    res.text('the second text')
+    h = {"Content-Type": "image/x-icon"}
+    res.headers(h)
     expected = b'HTTP/1.1 200 OK\r\nContent-Type: image/x-icon\r\n\r\n'
     actual = res.to_data()
     #assert actual == expected, f"Actual: {actual}\nExpected: {expected}"
-
-
-
-
-
 
 
 
