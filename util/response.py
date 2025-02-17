@@ -37,13 +37,13 @@ class Response:
         return self
 
     def text(self, data: str):
-        self.body += data.encode('utf-8')
-        self.heads.update({"Content-Type": "text/plain; charset=utf-8"})
+        self.body += data.encode()
+        #self.heads.update({"Content-Type": "text/plain; charset=utf-8"})
         #print('hello is in the response.text()')
         return self
 
 
-    def json(self, data:list):
+    def json(self, data):
         self.body = json.dumps(data).encode('utf-8')
         self.heads.update({"Content-Type": "application/json"})
         return self
@@ -76,7 +76,7 @@ class Response:
         response_header = "".join(response_lines)
         print(response_header.encode('utf-8'))
         response_bytes = response_header.encode('utf-8') + self.body
-        #print(response_bytes)
+        print(response_bytes)
         return response_bytes
 
 
@@ -95,14 +95,37 @@ def test1():
 
 def test2():
     res = Response()
-    h = {"Content-Type": "image/x-icon"}
-    res.headers(h)
+    #h = {"Content-Type": "image/x-icon"}
+    #res.headers(h)
+    res.text('the first text')
+    res.text('the second text')
     expected = b'HTTP/1.1 200 OK\r\nContent-Type: image/x-icon\r\n\r\n'
     actual = res.to_data()
     #assert actual == expected, f"Actual: {actual}\nExpected: {expected}"
 
 
 
+def test_json():
+    res = Response()
+    sample_data = {"name": "Jiale", "age": 25}
+    new_data = {"name": "weweweweweJiale", "age": 35}
+    res.json(sample_data)
+
+
+    res.json(new_data)
+    actual = res.to_data()
+    expected_body = b'{"name": "weweweweweJiale", "age": 35}'
+    expected_headers = {
+        "Content-Type": "application/json",
+        "Content-Length": str(len(expected_body))
+    }
+    # Check if body matches expected JSON
+    assert res.body == expected_body, f"Body mismatch. Expected: {expected_body}, Found: {res.body}"
+
+
+
+
 if __name__ == '__main__':
     test1()
     test2()
+    test_json()
