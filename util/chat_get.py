@@ -20,6 +20,7 @@ def chat_get(request, handler):
 
     res.text(message)
     res.headers({'Content-Type': 'application/json'})
+
     handler.request.sendall(res.to_data())
 
 

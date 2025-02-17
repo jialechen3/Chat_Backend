@@ -26,7 +26,7 @@ def chat_update(request, handler):
         cont = json.loads(request.body.decode())
         print(cont)
         real_content = cont.get('content')
-        real_content = html.escape(real_content)
+        #real_content = html.escape(real_content)
         print('after strip the content is:', cont)
         chat_collection.update_one({'id': user_id}, {'$set': {'content': real_content, 'updated': True}})
         res.set_status(200, 'ok')

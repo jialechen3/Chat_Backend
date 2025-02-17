@@ -14,7 +14,7 @@ def chat_create(request, handler):
     content = data.get('content')
 
     #html escape
-    content = html.escape(content)
+    #content = html.escape(content)
     session_cookie = 'empty'
     message_id = str(uuid.uuid4())
 
@@ -48,7 +48,7 @@ def chat_create(request, handler):
     # Send response
     res.set_status(200, 'OK')
 
-    res.text('message sent')
+    res.bytes(b'message sent')
     res.headers({'Content-Type': 'application/json'})
     handler.request.sendall(res.to_data())
     print("A create length:" + res.heads['Content-Length'])
