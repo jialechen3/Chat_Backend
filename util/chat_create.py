@@ -12,11 +12,6 @@ def chat_create(request, handler):
     data = json.loads(request.body.decode('utf-8'))
     #get the content from the dict
     content = data.get('content')
-    if not content:
-        res.set_status(400, 'Bad Request')
-        res.text('No Content')
-        handler.request.sendall(res.to_data())
-        return
 
     #html escape
     content = html.escape(content)

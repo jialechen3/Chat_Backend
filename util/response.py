@@ -43,7 +43,7 @@ class Response:
         return self
 
 
-    def json(self, data:list):
+    def json(self, data):
         self.body = json.dumps(data).encode('utf-8')
         self.heads.update({"Content-Type": "application/json"})
         return self
@@ -63,10 +63,8 @@ class Response:
             header_line = f"{key}: {value}"
             response_lines.append(header_line + "\r\n")
 
-        for cook in self.cookie:
-            cookie_line = f"Set-Cookie: {cook}"
-            response_lines.append(cookie_line + "\r\n")
-
+        for key, value in self.cookie.items():
+            response_lines.append(f"Set-Cookie: {key}={value}\r\n")
         #disable MIME type sniffing
         response_lines.append("X-Content-Type-Options: nosniff\r\n")
         print(self.heads)
