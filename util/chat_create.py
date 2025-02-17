@@ -14,7 +14,7 @@ def chat_create(request, handler):
     content = data.get('content')
 
     #html escape
-    #content = html.escape(content)
+    content = html.escape(content)
     session_cookie = 'empty'
     message_id = str(uuid.uuid4())
 
@@ -29,7 +29,7 @@ def chat_create(request, handler):
             chat_collection.insert_one({
                 "author": session_cookie,
                 "id": message_id,
-                "content": data.get("content"),
+                "content": content,
                 "updated": False
             })
 
@@ -41,7 +41,7 @@ def chat_create(request, handler):
         chat_collection.insert_one({
             "author": author,
             "id": message_id,
-            "content": data.get("content"),
+            "content": content,
             "updated": False
         })
 
