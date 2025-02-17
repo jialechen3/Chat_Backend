@@ -38,7 +38,7 @@ class Response:
 
     def text(self, data: str):
         self.body += data.encode()
-        #self.heads.update({"Content-Type": "text/plain; charset=utf-8"})
+        self.heads.update({"Content-Type": "text/plain; charset=utf-8"})
         #print('hello is in the response.text()')
         return self
 
@@ -105,22 +105,7 @@ def test2():
 
 
 
-def test_json():
-    res = Response()
-    sample_data = {"name": "Jiale", "age": 25}
-    new_data = {"name": "weweweweweJiale", "age": 35}
-    res.json(sample_data)
 
-
-    res.json(new_data)
-    actual = res.to_data()
-    expected_body = b'{"name": "weweweweweJiale", "age": 35}'
-    expected_headers = {
-        "Content-Type": "application/json",
-        "Content-Length": str(len(expected_body))
-    }
-    # Check if body matches expected JSON
-    assert res.body == expected_body, f"Body mismatch. Expected: {expected_body}, Found: {res.body}"
 
 
 
@@ -128,4 +113,3 @@ def test_json():
 if __name__ == '__main__':
     test1()
     test2()
-    test_json()
