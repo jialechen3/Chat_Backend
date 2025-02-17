@@ -21,14 +21,7 @@ class Response:
 
 
     def cookies(self, cookies:dict):
-        cookie_header = ""
-        for key, value in cookies.items():
-            cookie_header = f"{key}={value}"
-
-        if "Set-Cookie" not in self.heads:
-            self.heads["Set-Cookie"] = ""
-        self.heads["Set-Cookie"] = cookie_header
-
+        self.cookie.update(cookies)
         return self
 
     def bytes(self, data: bytes):
@@ -78,7 +71,6 @@ class Response:
         return response_bytes
 
 
-
 def test1():
     res = Response()
     res.text("hello")
@@ -99,8 +91,19 @@ def test2():
     actual = res.to_data()
     #assert actual == expected, f"Actual: {actual}\nExpected: {expected}"
 
+def test3():
+    res = Response()
+    res.text("multiple cookies test")
+    cookie1 = "session=abc123; Expires=Wed, 21 Oct 2025 07:28:00 GMT; HttpOnly"
+    cookie2 = "user_id=12345; Path=/; Secure"
+    res.cookies({"session": cookie1, "user_id": cookie2})
+    expected = b'HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: 21\r\nSet-Cookie: session=' + cookie1.encode('utf-8') + b'\r\nSet-Cookie: user_id=' + cookie2.encode('utf-8') + b'\r\nX-Content-Type-Options: nosniff\r\n\r\nmultiple cookies test'
+    actual = res.to_data()
+    print(actual)
+    assert actual == expected, f"Actual: {actual}\nExpected: {expected}"
 
 
 if __name__ == '__main__':
-    test1()
-    test2()
+    #test1()
+    #test2()
+    test3()
