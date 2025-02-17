@@ -21,8 +21,7 @@ class Request:
         #headers
         lists = str1.split("\r\n")
         self.method = lists[0].split(" ")[0]
-        if self.method == "GET" or self.method == "POST" or self.method == "PATCH" or self.method == "DELETE":
-            self.path = lists[0].split(" ")[1]
+        self.path = lists[0].split(" ")[1]
         self.http_version = "HTTP/1.1"
 
         #iterate through all the headers

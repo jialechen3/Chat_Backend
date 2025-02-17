@@ -1,4 +1,5 @@
 import re
+from traceback import print_tb
 
 from util.response import Response
 
@@ -31,4 +32,6 @@ class Router:
         res = Response()
         res.set_status(404, "Not Found")
         res.text("404 Not Found")
-        handler.request.sendall(res.to_data())
+        data = res.to_data()
+        handler.request.sendall(data)
+
