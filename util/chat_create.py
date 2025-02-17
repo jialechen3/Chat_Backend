@@ -16,11 +16,16 @@ def chat_create(request, handler):
     #html escape
     content = html.escape(content)
     session_cookie = 'empty'
-    author = ''
     message_id = str(uuid.uuid4())
+
+
+
     for cookie in request.cookies:
         if cookie.startswith('session'):
             session_cookie = request.cookies['session']
+            author = str(session_cookie)
+            cookie_str = author + "; Expires=Wed, 21 Oct 2025 07:28:00 GMT; Secure"
+            res.cookies({"session": cookie_str})
             chat_collection.insert_one({
                 "author": session_cookie,
                 "id": message_id,
@@ -40,11 +45,10 @@ def chat_create(request, handler):
             "updated": False
         })
 
-
     # Send response
     res.set_status(200, 'OK')
 
     res.text('message sent')
-    res.headers({'Content-type': 'application/json'})
+    res.headers({'Content-Type': 'application/json'})
     handler.request.sendall(res.to_data())
     print("A create length:" + res.heads['Content-Length'])
