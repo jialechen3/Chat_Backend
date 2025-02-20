@@ -57,7 +57,7 @@ def chat_create(request, handler):
     if session_cookie == 'empty':
         session_cookie = uuid.uuid4()
         author = str(session_cookie)
-        cookie_str = author + "; Expires=Wed, 21 Oct 2025 07:28:00 GMT; Secure"
+        cookie_str = author + "; Expires=Wed, 29 Oct 2025 07:28:00 GMT; HttpOnly; Secure"
         res.cookies({"session": cookie_str})
 
         #adding profile img
