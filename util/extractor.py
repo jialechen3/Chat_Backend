@@ -10,6 +10,7 @@ MIME_TYPES = {
     "webp": "image/webp",
     "gif": "image/gif",
     "ico": "image/x-icon",
+    "svg": "image/svg+xml"
 }
 def extractor(request, handler):
     res = Response()
@@ -20,19 +21,14 @@ def extractor(request, handler):
     #match the jpg to corresponding value
     mime_type = {"Content-Type": _type}
     file_path = "." + request.path
-    try:
-        with open(file_path, "rb") as out_file:
-            content = out_file.read()
-            if 'image' == _type.split('/')[0]:
-                res.bytes(content)
-            elif'text' == _type.split('/')[0]:
-                res.bytes(content)
-            mime_type["Content-Length"] = str(len(content))
-            print(mime_type)
-            res.headers(mime_type)
-    except FileNotFoundError:
-        res.set_status(404, "Not Found")
-        res.text("404 Not Found")
+
+    with open(file_path, "rb") as out_file:
+        content = out_file.read()
+        res.bytes(content)
+        mime_type["Content-Length"] = str(len(content))
+        print(mime_type)
+        res.headers(mime_type)
+
 
         #if 'image' == _type.split('/')[0]:
             #res.bytes(out_file)

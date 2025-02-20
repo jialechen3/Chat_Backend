@@ -4,7 +4,10 @@ from util.chat_create import chat_create
 from util.chat_delete import chat_delete
 from util.chat_get import chat_get
 from util.chat_update import chat_update
+from util.emoji_create import emoji_create
+from util.emoji_delete import emoji_delete
 from util.extractor import extractor
+from util.nickname import nickname
 from util.render import render
 from util.request import Request
 from util.router import Router
@@ -25,6 +28,9 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/api/chats", chat_get, True)
         self.router.add_route("PATCH", "/api/chats", chat_update, False)
         self.router.add_route("DELETE", "/api/chats", chat_delete, False)
+        self.router.add_route("PATCH", "/api/reaction", emoji_create, False)
+        self.router.add_route("DELETE", "/api/reaction", emoji_delete, False)
+        self.router.add_route("PATCH", "/api/nickname", nickname, True)
         super().__init__(request, client_address, server)
 
     def handle(self):
