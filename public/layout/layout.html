@@ -8,7 +8,6 @@
     <link rel="icon" type="image/x-icon" href="/public/imgs/favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="/public/css/googleButton.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
@@ -121,12 +120,7 @@
             <a href="/chat">Chat</a>
           </div>
 
-          <!-- <label>Homework 2</label>
-          <div class="nav-group">
-            <i data-lucide="users"></i>
-            <a href="/your-profile">Your Profile</a>
-          </div>
-
+          <label>Homework 2</label>
           <div class="nav-group">
             <i data-lucide="search"></i>
             <a href="/search-users">Search Users</a>
@@ -137,7 +131,7 @@
             <a href="/settings">Settings</a>
           </div>
 
-          <label>Homework 3</label>
+          <!-- <label>Homework 3</label>
           <div class="nav-group">
             <i data-lucide="graduation-cap"></i>
             <a href="/312learn">312learn</a>
@@ -173,7 +167,7 @@
             </a>
           </div>
           <div id="logged-in" class="flex flex-row items-center gap-4">
-            <p id="hello-username">Hello name!</p>
+            <p id="hello-username">Hello ME_ROUTE_NOT_DONE!</p>
 
             <a href="/logout" class="px-3 py-1 text-sm rounded-xl bg-gray-700">
               Logout
@@ -190,12 +184,13 @@
       lucide.createIcons();
 
       async function main() {
-        // const userProfile = await (await fetch("/api/users/@me")).json();
+        const userProfile = await (await fetch("/api/users/@me")).json();
         const loginButton = document.getElementById("login-button");
         const registerButton = document.getElementById("register-button");
         const loggedIn = document.getElementById("logged-in");
         const myUsername = document.getElementById("hello-username");
 
+        console.log("USER PROFILE", userProfile);
         if (userProfile.id) {
           loginButton.style.display = "none";
           registerButton.style.display = "none";

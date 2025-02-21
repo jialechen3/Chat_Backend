@@ -1,0 +1,220 @@
+<div class="h-full flex justify-center items-center">
+  <div class="w-full max-w-lg p-8 bg-gray-800 rounded-lg">
+    <h1 class="mb-4 text-center">Login</h1>
+    <p class="hidden text-red-500 mb-4" id="error">
+      There was an error logging you in. Either your username or password is
+      incorrect.
+    </p>
+    <form class="space-y-4" id="loginForm">
+      <div>
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="w-full mt-1 px-3 py-2 rounded-md"
+          required
+        />
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          class="w-full mt-1 px-3 py-2 rounded-md"
+          required
+        />
+      </div>
+      <a href="/forgot-password" class="text-sm text-blue-400 hover:underline">
+        Forgot Password?
+      </a>
+      <button
+        type="submit"
+        class="w-full py-2 px-4 bg-blue-700 text-white rounded-md hover:bg-blue-800"
+      >
+        Login
+      </button>
+    </form>
+    <div class="flex flex-col gap-y-2 justify-center items-center">
+      <a
+        href="/register"
+        class="text-blue-400 hover:underline mt-2 text-xs w-full"
+      >
+        Register account
+      </a>
+      <a
+        href="/authgithub"
+        class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#24292e] hover:bg-[#1b1f23] rounded-md shadow-sm transition-colors border border-white"
+      >
+        <svg
+          class="w-5 h-5"
+          aria-hidden="true"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
+        Sign in with GitHub
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- TOTP Dialog -->
+<div
+  id="totpDialog"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40"
+>
+  <div
+    class="w-full max-w-lg border border-gray-300 rounded-lg p-8 shadow-lg bg-primary"
+  >
+    <h1 class="text-2xl font-bold mb-6 text-white">
+      Two-Factor Authentication
+    </h1>
+    <p class="hidden text-red-500 mb-4" id="totpError">
+      Invalid authentication code. Please try again.
+    </p>
+    <div class="space-y-6">
+      <div>
+        <label for="totpCode" class="block text-sm font-medium mb-2 text-white">
+          Enter Authentication Code
+        </label>
+        <input
+          type="text"
+          id="totpCode"
+          placeholder="Enter 6-digit code"
+          class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+          maxlength="6"
+          pattern="[0-9]*"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+        />
+        <p class="mt-2 text-sm text-gray-400">
+          Enter the 6-digit code from your authenticator app
+        </p>
+      </div>
+      <div class="flex justify-end gap-4">
+        <button
+          type="button"
+          id="verifyTotp"
+          class="bg-blue-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
+        >
+          Verify
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  const doesURLHaveErrorAtEnd = new URLSearchParams(window.location.search).get(
+    "error"
+  );
+  const errorType = new URLSearchParams(window.location.search).get(
+    "error_type"
+  );
+  const errorElement = document.getElementById("error");
+  const totpErrorElement = document.getElementById("totpError");
+  const totpDialog = document.getElementById("totpDialog");
+  const loginForm = document.getElementById("loginForm");
+  const totpInput = document.getElementById("totpCode");
+  const verifyTotpBtn = document.getElementById("verifyTotp");
+
+  // Show appropriate error messages
+  if (doesURLHaveErrorAtEnd) {
+    if (errorType === "totp") {
+      totpErrorElement.style.display = "block";
+    } else {
+      errorElement.style.display = "block";
+    }
+  }
+  // Handle form submission
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    const formData = new URLSearchParams();
+    formData.append("username", username);
+    formData.append("password", password);
+
+    try {
+      const response = await fetch("/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Show TOTP dialog if required
+          totpDialog.classList.remove("hidden");
+          totpInput.value = ""; // Clear any previous input
+          totpInput.focus();
+          return;
+        }
+
+        // Get error message from response and show alert
+        const errorText = await response.text();
+        alertManager.newAlert(errorText, "error", 5000, "Login Error");
+        return;
+      }
+
+      //Go to home page is login was successful
+      window.location.href = "/";
+    } catch (error) {
+      alertManager.newAlert(error.message, "error", 5000, "Login Error");
+    }
+  });
+
+  // Handle TOTP verification
+  verifyTotpBtn.addEventListener("click", async () => {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    const totpCode = totpInput.value;
+
+    const formData = new URLSearchParams();
+    formData.append("username", username);
+    formData.append("password", password);
+    formData.append("totpCode", totpCode.replace(/\s/g, ""));
+
+    try {
+      const response = await fetch("/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        alertManager.newAlert(
+          errorText || "Invalid 2FA code",
+          "error",
+          5000,
+          "2FA Verification Error"
+        );
+        return;
+      }
+
+      window.location.href = "/";
+    } catch (error) {
+      console.error("TOTP verification error:", error);
+    }
+  });
+
+  // Handle Enter key in TOTP input
+  totpInput?.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      verifyTotpBtn.click();
+    }
+  });
+</script>

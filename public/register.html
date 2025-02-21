@@ -1,0 +1,109 @@
+<div class="h-full flex justify-center items-center">
+  <div class="w-full max-w-lg p-8 bg-gray-800 rounded-lg">
+    <h1 class="mb-4 text-center">Register Account</h1>
+
+    <p class="hidden text-red-500 mb-4 text-center" id="error">
+      There was an error logging you in. Either your username or password is
+      incorrect.
+    </p>
+
+    <form onsubmit="submitForm(event)" class="space-y-4">
+      <div>
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="w-full mt-1 px-3 py-2 rounded-md"
+          required
+        />
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          class="w-full mt-1 px-3 py-2 rounded-md"
+          required
+        />
+      </div>
+      <div>
+        <label for="password2">Confirm Password</label>
+        <input
+          id="password2"
+          name="password2"
+          type="password"
+          class="w-full mt-1 px-3 py-2 rounded-md"
+          required
+        />
+      </div>
+      <a href="/forgot-password" class="text-sm text-blue-400 hover:underline">
+        Forgot Password?
+      </a>
+
+      <button
+        type="submit"
+        class="w-full py-2 px-4 bg-blue-700 text-white rounded-md hover:bg-blue-800"
+      >
+        Register
+      </button>
+    </form>
+
+    <a href="/login" class="text-blue-400 hover:underline mt-2 text-xs">
+      Already have account, Login
+    </a>
+  </div>
+</div>
+
+<script>
+  function submitForm(event) {
+    event.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    const password2 = document.getElementById("password2").value;
+
+    // Check if passwords match
+    if (password !== password2) {
+      alertManager.newAlert(
+        "Passwords do not match. No request was sent",
+        "error",
+        10000,
+        "Form Validation failed"
+      );
+      return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append("username", username);
+    formData.append("password", password);
+
+    fetch("/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formData,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((error) => {
+            throw new Error(error);
+          });
+        }
+
+        //Go to login page is signup was successful
+        window.location.href = "/login";
+      })
+      .catch((error) => {
+        console.log("Error: ", error.message);
+        alertManager.newAlert(
+          error.message,
+          "error",
+          10000,
+          "Registration Error"
+        );
+      });
+  }
+</script>

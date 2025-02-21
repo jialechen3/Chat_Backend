@@ -1,0 +1,152 @@
+<div
+  class="w-full max-w-2xl mx-auto mt-10 border border-gray-300 rounded-lg p-6 shadow-lg"
+>
+  <h1 class="text-2xl font-bold mb-6">Edit Profile Settings</h1>
+  <form onsubmit="handleSubmit(event)" class="space-y-6">
+    <div>
+      <label class="block text-sm font-medium mb-2"> Profile Picture </label>
+      <div class="flex items-center gap-4">
+        <img
+          id="avatar-preview"
+          src="/public/imgs/user.webp"
+          alt="User Avatar"
+          class="w-20 h-20 rounded-full border border-gray-300"
+        />
+        <!-- <input
+          name="avatar"
+          id="avatar"
+          type="file"
+          class="border border-gray-300 text-white rounded-lg px-4 py-2 text-sm"
+        /> -->
+      </div>
+    </div>
+    <div>
+      <label for="username" class="block text-sm font-medium mb-2">
+        Username
+      </label>
+      <input
+        name="username"
+        id="username"
+        type="text"
+        placeholder="Enter your username"
+        class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+        required
+      />
+    </div>
+    <div>
+      <label for="password" class="block text-sm font-medium mb-2">
+        Change Password
+      </label>
+      <input
+        name="password"
+        id="password"
+        type="password"
+        placeholder="Enter new password"
+        class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
+      />
+    </div>
+
+    <!-- Add 2FA section -->
+    <div class="mt-6">
+      <div
+        class="flex items-center justify-between p-4 border border-gray-300 rounded-lg"
+      >
+        <div class="flex items-center gap-3">
+          <div class="p-2 bg-gray-100 rounded-full">
+            <i data-lucide="lock" class="w-5 h-5 text-gray-600"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium">Two-Factor Authentication</h3>
+            <p class="text-sm text-gray-500 pr-2">
+              Add an extra layer of security to your account. By clicking the
+              button, this will regenerate your 2FA secret and QR code. Even if
+              you already have one set.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          id="enable2fa"
+          class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-500 text-sm font-medium"
+        >
+          Regenerate 2FA
+        </button>
+      </div>
+    </div>
+
+    <!-- 2FA Dialog -->
+    <div
+      id="twoFactorDialog"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+    >
+      <div
+        class="w-full max-w-2xl border border-gray-300 rounded-lg p-6 shadow-lg bg-primary"
+      >
+        <h1 class="text-2xl font-bold mb-6 text-white">
+          Enable Two-Factor Authentication
+        </h1>
+        <div class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium mb-2 text-white"
+              >QR Code</label
+            >
+            <div class="flex justify-center">
+              <img
+                id="qrCode"
+                alt="2FA QR Code"
+                class="w-48 h-48 border border-gray-300 rounded-lg"
+              />
+            </div>
+            <p class="mt-2 text-sm text-gray-400">
+              Scan this QR code with your authenticator app to enable 2FA
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-2 text-white"
+              >Manual Entry Code</label
+            >
+            <div
+              class="border border-gray-300 rounded-lg px-4 py-2 text-sm bg-primary"
+            >
+              <code id="secretCode" class="break-all text-white"></code>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-4">
+            <button
+              type="button"
+              id="closeDialog"
+              class="px-4 py-2 border border-gray-300 rounded-lg text-white hover:bg-gray-800 text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              id="doneButton"
+              class="bg-blue-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button
+      type="submit"
+      class="w-full bg-blue-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-blue-700"
+    >
+      Save Changes
+    </button>
+  </form>
+</div>
+
+<!-- Add Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script src="/public/js/settings.js"></script>
+
+<script>
+  lucide.createIcons();
+</script>
