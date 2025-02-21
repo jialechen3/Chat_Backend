@@ -2,7 +2,6 @@
 
 from util.database import chat_collection
 from util.response import Response
-from bson import ObjectId
 def chat_delete(request, handler):
 
     res = Response()

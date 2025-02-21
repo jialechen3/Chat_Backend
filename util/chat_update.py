@@ -1,13 +1,8 @@
 import html
 import json
 
-import bson
-from bson import Binary, Code
-
 from util.database import chat_collection
 from util.response import Response
-from bson import ObjectId
-from bson.json_util import loads
 
 
 def chat_update(request, handler):
