@@ -22,9 +22,7 @@ class Request:
         lists = str1.split("\r\n")
         str0 = lists[0].split(" ")
         self.method = str0[0]
-        print('DEBUG:'+ str(str0))
-        print('The str0[0]'+str0[0])
-        print('The str0[1]'+str0[1])
+
         self.path = str0[1]
 
         self.http_version = "HTTP/1.1"

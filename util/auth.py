@@ -21,11 +21,13 @@ user = findone({"id"}:bson.objectID(result_id)})
 isVerified = bcrypt.checkpw("Password123".encode,user["password"].encode())
 
 '''
+import html
 
 specialChars = {'!', '@', '#', '$', '%', '^', '&', '(', ')', '-', '_', '='}
 
 def extract_credentials(request):
     body = request.body.decode('utf-8')
+    #body = html.escape(set_body)
     #body: query string username&password
     username = None
     password = None
@@ -39,11 +41,12 @@ def extract_credentials(request):
             password = decode_(value)
 
 
-    return [username, password]
+    str = [username, password]
+    return str
 
 
 def decode_(s):
-    str = []
+    str = ''
     i = 0
     while i < len(s):
         if s[i] == '%':
@@ -51,14 +54,15 @@ def decode_(s):
             encode += s[i+2]
             parse_int = int(encode, 16)
             char = chr(parse_int)
-            str.append(char)
+            str+= char
             i += 3
         else:
-            str.append(s[i])
+            str+=(s[i])
             i += 1
-    return ''.join(str)
+    print("decode" + str)
+    return str
 
-def validate_password(password):
+def validate_password(password:str):
     """0.The length of the password is at least 8
     1.The password contains at least 1 lowercase letter
     2.The password contains at least 1 uppercase letter
@@ -67,8 +71,23 @@ def validate_password(password):
     5.The password does not contain any invalid characters
     (eg. any character that is not an alphanumeric or one of the 12 special characters)
     """
-    if (len(password) < 8) or (not password.contains(specialChars)): #0,4
+    if len(password) < 8 : #0,4
         return False
 
+    lowercase = False
+    uppercase = False
+    number = False
+    special_inRange = False
+    for c in password:
+        if c.islower():
+            lowercase = True
+        elif c.isupper():
+            uppercase = True
+        elif c.isdigit():
+            number = True
+        elif c in specialChars:
+            special_inRange = True
+        else:
+            return False
 
-    return True
+    return lowercase and uppercase and number and special_inRange
