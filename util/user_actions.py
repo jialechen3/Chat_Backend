@@ -83,36 +83,47 @@ def login(request, handler):
 
 def logout(request, handler):
     res = Response()
+
+
     auth_cookie = request.cookies.get("auth_token")
+
     if not auth_cookie:
-        res.status(400, "no auth cookie")
-        res.text('no auth cookie')
+
+        res.set_status(400, "No auth cookie")
+        res.text("No auth cookie")
         handler.request.sendall(res.to_data())
         return
 
+
     hashed_token = hashlib.sha256(auth_cookie.encode()).hexdigest()
+
+
     user = user_collection.find_one({'auth_token': hashed_token})
 
     if not user:
-        res.status(400, "invalid")
-        res.text('invalid auth token')
+        res.set_status(400, "Invalid auth token")
+        res.text("Invalid auth token")
         handler.request.sendall(res.to_data())
         return
 
-    for cookie in request.cookies:
-        if cookie.startswith('session'):
-            cookie = request.cookies.get('session')
-            session_cookie = "400" + "; max-age=0; HttpOnly; Secure"
-            res.cookies({"session": session_cookie})
-    #auth_cookie = cookie.split(';')[0]
-    cookie_str = "400" + "; max-age=0; HttpOnly; Secure"
-    res.cookies(({"auth_token": cookie_str}))
-    user_collection.update_one({'auth_token': hashed_token}, {'$set': {"auth_token": None}})
 
+    if 'session' in request.cookies:
+        session_cookie = request.cookies.get('session')
+        cookie_str = ''+ '; max-age=0; HttpOnly; Secure'
+        res.cookies({"session": cookie_str})
+
+    cookie_str = '' + '; max-age=0; HttpOnly; Secure'
+    res.cookies({'auth_token': cookie_str})
+
+
+    user_collection.update_one(
+        {'auth_token': hashed_token},
+        {'$set': {'auth_token': None}}
+    )
 
     res.set_status(302, 'Found')
-    res.text("user logged out")
-    res.headers({"Location": "/"})
+    res.headers({"location": "/"})
+    res.text(json.dumps({"message": "User logged out"}))
     handler.request.sendall(res.to_data())
 
 def get_me(request, handler):
@@ -124,7 +135,11 @@ def get_me(request, handler):
         if cookie.startswith('auth_token'):
             auth_token = request.cookies.get('auth_token')
             logged = True
-
+    if auth_token=='':
+        res.set_status(400, "Invalid auth token")
+        res.json('')
+        handler.request.sendall(res.to_data())
+        return
     if not logged:
         res.set_status(401, "Unauthorized")
         res.json('')
