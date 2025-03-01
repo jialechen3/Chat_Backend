@@ -88,7 +88,6 @@ def logout(request, handler):
     auth_cookie = request.cookies.get("auth_token")
 
     if not auth_cookie:
-
         res.set_status(400, "No auth cookie")
         res.text("No auth cookie")
         handler.request.sendall(res.to_data())
@@ -96,8 +95,6 @@ def logout(request, handler):
 
 
     hashed_token = hashlib.sha256(auth_cookie.encode()).hexdigest()
-
-
     user = user_collection.find_one({'auth_token': hashed_token})
 
     if not user:
@@ -109,10 +106,10 @@ def logout(request, handler):
 
     if 'session' in request.cookies:
         session_cookie = request.cookies.get('session')
-        cookie_str = ''+ '; max-age=0; HttpOnly; Secure'
+        cookie_str = '0; max-age=0; HttpOnly; Secure'
         res.cookies({"session": cookie_str})
 
-    cookie_str = '' + '; max-age=0; HttpOnly; Secure'
+    cookie_str = '0; max-age=0; HttpOnly; Secure'
     res.cookies({'auth_token': cookie_str})
 
 
@@ -123,7 +120,7 @@ def logout(request, handler):
 
     res.set_status(302, 'Found')
     res.headers({"location": "/"})
-    res.text(json.dumps({"message": "User logged out"}))
+    res.text("User logged out")
     handler.request.sendall(res.to_data())
 
 def get_me(request, handler):
@@ -167,7 +164,6 @@ def search_user(request, handler):
                 key, value = pair.split('=', 1)
                 if key == 'user':
                     username = value
-    print(username)
     if username == '':
         res.set_status(200, "OK")
         res.json({})
