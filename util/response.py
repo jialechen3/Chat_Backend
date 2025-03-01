@@ -61,12 +61,12 @@ class Response:
             response_lines.append(f"Set-Cookie: {key}={value}\r\n")
         #disable MIME type sniffing
         response_lines.append("X-Content-Type-Options: nosniff\r\n")
-        print(self.heads)
+        #print(self.heads)
         #\r\n\r\n
         response_lines.append("\r\n")
 
         response_header = "".join(response_lines)
-        print(response_header.encode('utf-8'))
+        #print(response_header.encode('utf-8'))
         response_bytes = response_header.encode('utf-8') + self.body
         #print(response_bytes)
         return response_bytes

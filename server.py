@@ -12,7 +12,7 @@ from util.render import render
 from util.request import Request
 from util.router import Router
 from util.hello_path import hello_path
-from util.user_actions import register, logout, login
+from util.user_actions import register, logout, login, get_me, search_user
 
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
@@ -38,9 +38,15 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("PATCH", "/api/reaction", emoji_create, False)
         self.router.add_route("DELETE", "/api/reaction", emoji_delete, False)
         self.router.add_route("PATCH", "/api/nickname", nickname, True)
+
+
         self.router.add_route("POST", "/register", register, True)
         self.router.add_route("GET", "/logout", logout, True)
         self.router.add_route("POST", "/login", login, True)
+        self.router.add_route("GET", "/api/users/@me", get_me, True)
+        self.router.add_route("GET", "/api/users/search", search_user, True)
+
+
 
 
 

@@ -38,13 +38,12 @@ def chat_create(request, handler):
         if cookie.startswith('session'):   #if there is a session cookie
             session_cookie = request.cookies['session']
             author = str(session_cookie)
-            #cookie_str = author + "; Expires=Wed, 21 Oct 2025 07:28:00 GMT; Secure"
+            cookie_str = author + "; Expires=Wed, 21 Oct 2025 07:28:00 GMT; Secure; Path=/"
 
             #I am finding the nickname for this author id
             #end nickname
 
-
-            #res.cookies({"session": cookie_str})
+            res.cookies({"session": cookie_str})
             if not logged:
                 name = chat_collection.find_one({"author": session_cookie})
                 update_nickname = name['nickname']
@@ -58,12 +57,13 @@ def chat_create(request, handler):
                     "imageURL": f"public/imgs/profile/avatar_{author}.svg"
                 })
             else:
-
                 auth_token = request.cookies['auth_token']
                 hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
                 user = user_collection.find_one({"user_token": hashed_token})
+                update_nickname = ''
                 name = chat_collection.find_one({"author": user['username']})
-                update_nickname = name['nickname']
+                if name:
+                    update_nickname = name['nickname']
                 chat_collection.insert_one({
                     "author": user['username'],
                     "id": message_id,
@@ -82,7 +82,7 @@ def chat_create(request, handler):
     if session_cookie == 'empty':
         session_cookie = uuid.uuid4()
         author = str(session_cookie)
-        cookie_str = author + "; Expires=Wed, 29 Oct 2025 07:28:00 GMT; HttpOnly; Secure"
+        cookie_str = author + "; Expires=Wed, 29 Oct 2025 07:28:00 GMT; HttpOnly; Secure; Path=/"
         res.cookies({"session": cookie_str})
 
         #######################################################################################

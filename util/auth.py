@@ -59,7 +59,7 @@ def decode_(s):
         else:
             str+=(s[i])
             i += 1
-    print("decode" + str)
+
     return str
 
 def validate_password(password:str):

@@ -1,4 +1,5 @@
 import hashlib
+import json
 import uuid
 
 import bcrypt
@@ -68,6 +69,8 @@ def login(request, handler):
     ################################################################################################################
     #######if there is a session cookie, change all the message author name#########################################
     for cookie in request.cookies:
+        print("test cookies")
+        print(request.cookies)
         if cookie.startswith('session'):
             session_cookie = request.cookies['session']
             author = str(session_cookie)
@@ -83,7 +86,6 @@ def logout(request, handler):
     auth_cookie = request.cookies.get('auth_token')
     for cookie in request.cookies:
         if cookie.startswith('session'):
-            print('logout cookie')
             cookie = request.cookies.get('session')
             session_cookie = cookie + "; max-age=0; HttpOnly; Secure"
             res.cookies({"session": session_cookie})
@@ -97,4 +99,44 @@ def logout(request, handler):
     res.text("user logged out")
     handler.request.sendall(res.to_data())
 
+def get_me(request, handler):
+    res = Response()
 
+    logged = False
+    auth_token = ''
+    for cookie in request.cookies:
+        if cookie.startswith('auth_token'):
+            auth_token = request.cookies.get('auth_token')
+            logged = True
+
+    if not logged:
+        res.set_status(401, "Unauthorized")
+        res.json('')
+        handler.request.sendall(res.to_data())
+        return
+    else:
+        hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
+        user = user_collection.find_one({"user_token": hashed_token})
+        user_profile = {
+            "username": user["username"],
+            "id": user["userid"]
+        }
+        res.json(user_profile)
+        handler.request.sendall(res.to_data())
+
+def search_user(request, handler):
+    res = Response()
+    body = request.body.decode('utf-8')
+    username = body.split('=')[-1]
+    if username == '':
+        res.set_status(200, "OK")
+        res.json({"users": []})
+        handler.request.sendall(res.to_data())
+        return
+
+    user = user_collection.find({"username": {"$regex": username, "$options": "i"}})
+    users = []
+    for user in user["users"]:
+        users.append(user)
+    res.json(users)
+    handler.request.sendall(res.to_data())
