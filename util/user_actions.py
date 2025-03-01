@@ -69,8 +69,6 @@ def login(request, handler):
     ################################################################################################################
     #######if there is a session cookie, change all the message author name#########################################
     for cookie in request.cookies:
-        print("test cookies")
-        print(request.cookies)
         if cookie.startswith('session'):
             session_cookie = request.cookies['session']
             author = str(session_cookie)
@@ -209,10 +207,13 @@ def update_profile(request, handler):
         return
 
     hashed_token = hashlib.sha256(auth_cookie.encode()).hexdigest()
-    user = user_collection.find_one({'auth_token': hashed_token})
 
-
+    chat = chat_collection.update_many({"author": user['username']}, {"$set": {"author": username}})
     user_collection.update_one({'auth_token': hashed_token}, {'$set': {"password": result, "username": username}})
+
+
+
+
 
     res.text('user updated')
     handler.request.sendall(res.to_data())
