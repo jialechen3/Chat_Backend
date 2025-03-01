@@ -15,7 +15,7 @@ def register(request, handler):
     strl = extract_credentials(request)
     username = strl[0]
     password = strl[1]
-    print('see password'+password)
+
     res= Response()
     if not validate_password(password):
         res.set_status(400, 'invalid password')
@@ -36,7 +36,7 @@ def register(request, handler):
         "userid": userid,
         "username": username,
         "password": result,
-        "user_token": ''
+        "auth_token": ''
     })
     res.text('account created')
     handler.request.sendall(res.to_data())
@@ -63,7 +63,7 @@ def login(request, handler):
     auth_token = str(uuid.uuid4())
     hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
     cookie_str = auth_token + "; max-age=3600; HttpOnly; Secure"
-    user_collection.update_one({'username': username}, {'$set': {"user_token": hashed_token}})
+    user_collection.update_one({'username': username}, {'$set': {"auth_token": hashed_token}})
     res.cookies({"auth_token": cookie_str})
 
     ################################################################################################################
@@ -83,16 +83,29 @@ def login(request, handler):
 
 def logout(request, handler):
     res = Response()
-    auth_cookie = request.cookies.get('auth_token')
+    auth_cookie = request.cookies.get("auth_token")
+    if auth_cookie == '':
+        res.status(400, "no auth cookie")
+        res.text('no auth cookie')
+        handler.request.sendall(res.to_data())
+        return
+    hashed_token = hashlib.sha256(auth_cookie.encode()).hexdigest()
+    user = user_collection.find_one({'auth_token': hashed_token})
+
+    if not user:
+        res.status(400, "invalid")
+        res.text('invalid auth token')
+        handler.request.sendall(res.to_data())
+        return
     for cookie in request.cookies:
         if cookie.startswith('session'):
             cookie = request.cookies.get('session')
-            session_cookie = cookie + "; max-age=0; HttpOnly; Secure"
+            session_cookie = cookie + "; max-age=0"
             res.cookies({"session": session_cookie})
     #auth_cookie = cookie.split(';')[0]
-    cookie_str = auth_cookie + "; max-age=0; HttpOnly; Secure"
+    cookie_str = auth_cookie + "; max-age=0"
     res.cookies(({"auth_token": cookie_str}))
-
+    user_collection.update_one({'auth_token': hashed_token}, {'$set': {"auth_token": None}})
 
 
     res.set_status(302, 'Found')
@@ -116,7 +129,7 @@ def get_me(request, handler):
         return
     else:
         hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
-        user = user_collection.find_one({"user_token": hashed_token})
+        user = user_collection.find_one({"auth_token": hashed_token})
         user_profile = {
             "username": user["username"],
             "id": user["userid"]
@@ -127,16 +140,55 @@ def get_me(request, handler):
 def search_user(request, handler):
     res = Response()
     body = request.body.decode('utf-8')
-    username = body.split('=')[-1]
+    query = ''
+    username = ''
+    if '?' in request.path:
+        query = request.path.split('?')[-1]
+        if query:
+            for pair in query.split('&'):
+                key, value = pair.split('=', 1)
+                if key == 'user':
+                    username = value
+    print(username)
     if username == '':
         res.set_status(200, "OK")
-        res.json({"users": []})
+        res.json({})
         handler.request.sendall(res.to_data())
         return
 
-    user = user_collection.find({"username": {"$regex": username, "$options": "i"}})
-    users = []
-    for user in user["users"]:
-        users.append(user)
-    res.json(users)
+    user = user_collection.find({"username": {"$regex": username}})
+    users =  []
+    if user:
+        for user in user:
+            users.append({"id": user["userid"], "username": user["username"]})
+
+    res.json({"users": users})
+    handler.request.sendall(res.to_data())
+
+
+
+def update_profile(request, handler):
+    strl = extract_credentials(request)
+    username = strl[0]
+    password = strl[1]
+
+    res = Response()
+    if not validate_password(password):
+        res.set_status(400, 'invalid password')
+        res.text('set a stronger password!')
+        handler.request.sendall(res.to_data())
+        return
+
+    if not user_collection.find_one({"username": username}):
+        res.set_status(400, "user not exists")
+        res.text("username not exists")
+        handler.request.sendall(res.to_data())
+        return
+
+    result = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+
+    user_collection.update_one({'username': username}, {'$set': {"password": result, "username": username}})
+
+
+    res.text('user updated')
     handler.request.sendall(res.to_data())

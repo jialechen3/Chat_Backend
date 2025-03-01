@@ -59,7 +59,7 @@ def chat_create(request, handler):
             else:
                 auth_token = request.cookies['auth_token']
                 hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
-                user = user_collection.find_one({"user_token": hashed_token})
+                user = user_collection.find_one({"auth_token": hashed_token})
                 update_nickname = ''
                 name = chat_collection.find_one({"author": user['username']})
                 if name:
@@ -104,7 +104,7 @@ def chat_create(request, handler):
         if logged:
             auth_token = request.cookies['auth_token']
             hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
-            user = user_collection.find_one({"user_token": hashed_token})
+            user = user_collection.find_one({"auth_token": hashed_token})
             chat_collection.insert_one({
                 "author": user['username'],
                 "id": message_id,
@@ -155,7 +155,7 @@ def chat_delete(request, handler):
     if logged:
         auth_token = request.cookies.get('auth_token')
         hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
-        user = user_collection.find_one({'user_token': hashed_token})
+        user = user_collection.find_one({'auth_token': hashed_token})
         if mes['author'] != user['username']:
             res.set_status(403, 'Forbidden')
             res.text('fail, you are not the user')
@@ -215,7 +215,7 @@ def chat_update(request, handler):
     if logged:
         auth_token = request.cookies.get('auth_token')
         hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
-        user = user_collection.find_one({'user_token': hashed_token})
+        user = user_collection.find_one({'auth_token': hashed_token})
         if mes['author']!=user['username']:
             res.set_status(403, 'Forbidden')
             res.text('fail, you are not the user')
