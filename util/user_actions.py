@@ -84,11 +84,12 @@ def login(request, handler):
 def logout(request, handler):
     res = Response()
     auth_cookie = request.cookies.get("auth_token")
-    if auth_cookie == '':
+    if not auth_cookie:
         res.status(400, "no auth cookie")
         res.text('no auth cookie')
         handler.request.sendall(res.to_data())
         return
+
     hashed_token = hashlib.sha256(auth_cookie.encode()).hexdigest()
     user = user_collection.find_one({'auth_token': hashed_token})
 
@@ -97,6 +98,7 @@ def logout(request, handler):
         res.text('invalid auth token')
         handler.request.sendall(res.to_data())
         return
+
     for cookie in request.cookies:
         if cookie.startswith('session'):
             cookie = request.cookies.get('session')
@@ -110,6 +112,7 @@ def logout(request, handler):
 
     res.set_status(302, 'Found')
     res.text("user logged out")
+    res.headers({"Location": "/"})
     handler.request.sendall(res.to_data())
 
 def get_me(request, handler):
@@ -171,6 +174,7 @@ def update_profile(request, handler):
     strl = extract_credentials(request)
     username = strl[0]
     password = strl[1]
+    result = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
     res = Response()
     if not validate_password(password):
@@ -179,16 +183,18 @@ def update_profile(request, handler):
         handler.request.sendall(res.to_data())
         return
 
-    if not user_collection.find_one({"username": username}):
-        res.set_status(400, "user not exists")
-        res.text("username not exists")
+    auth_cookie = request.cookies.get("auth_token")
+    if not auth_cookie:
+        res.status(400, "no auth cookie")
+        res.text('no auth cookie')
         handler.request.sendall(res.to_data())
         return
 
-    result = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    hashed_token = hashlib.sha256(auth_cookie.encode()).hexdigest()
+    #user = user_collection.find_one({'auth_token': hashed_token})
 
-    user_collection.update_one({'username': username}, {'$set': {"password": result, "username": username}})
 
+    user_collection.update_one({'auth_token': hashed_token}, {'$set': {"password": result, "username": username}})
 
     res.text('user updated')
     handler.request.sendall(res.to_data())
