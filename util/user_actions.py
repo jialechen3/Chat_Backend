@@ -102,10 +102,10 @@ def logout(request, handler):
     for cookie in request.cookies:
         if cookie.startswith('session'):
             cookie = request.cookies.get('session')
-            session_cookie = cookie + "; max-age=0"
+            session_cookie = "400" + "; max-age=0; HttpOnly; Secure"
             res.cookies({"session": session_cookie})
     #auth_cookie = cookie.split(';')[0]
-    cookie_str = auth_cookie + "; max-age=0"
+    cookie_str = "400" + "; max-age=0; HttpOnly; Secure"
     res.cookies(({"auth_token": cookie_str}))
     user_collection.update_one({'auth_token': hashed_token}, {'$set': {"auth_token": None}})
 
@@ -184,14 +184,21 @@ def update_profile(request, handler):
         return
 
     auth_cookie = request.cookies.get("auth_token")
+    hashed_token = hashlib.sha256(auth_cookie.encode()).hexdigest()
+    user = user_collection.find_one({'auth_token': hashed_token})
     if not auth_cookie:
         res.status(400, "no auth cookie")
         res.text('no auth cookie')
         handler.request.sendall(res.to_data())
         return
+    if not user:
+        res.status(400, "no auth_token")
+        res.text('no auth_token')
+        handler.request.sendall(res.to_data())
+        return
 
     hashed_token = hashlib.sha256(auth_cookie.encode()).hexdigest()
-    #user = user_collection.find_one({'auth_token': hashed_token})
+    user = user_collection.find_one({'auth_token': hashed_token})
 
 
     user_collection.update_one({'auth_token': hashed_token}, {'$set': {"password": result, "username": username}})
