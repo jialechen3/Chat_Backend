@@ -67,13 +67,14 @@ def login(request, handler):
     res.cookies({"auth_token": cookie_str})
 
     ################################################################################################################
-    #######if there is a session cookie, change all the message author name#########################################
+    #######if there is a session cookie, change all the message author name remove session cookie#########################################
     for cookie in request.cookies:
         if cookie.startswith('session'):
             session_cookie = request.cookies['session']
             author = str(session_cookie)
             chat = chat_collection.update_many({"author": author}, {"$set": {"author": username}})
-
+            cookie_str = '0;max-age=0;HttpOnly;Secure'
+            res.cookies({"session": cookie_str})
 
     res.set_status(200, 'OK')
     res.text('user logged in')
@@ -100,10 +101,10 @@ def logout(request, handler):
         return
 
 
-    if 'session' in request.cookies:
-        session_cookie = request.cookies.get('session')
-        cookie_str = '0;max-age=0;HttpOnly;Secure'
-        res.cookies({"session": cookie_str})
+    #if 'session' in request.cookies:
+     #   session_cookie = request.cookies.get('session')
+     #   cookie_str = '0;max-age=0;HttpOnly;Secure'
+     #   res.cookies({"session": cookie_str})
 
     cookie_str = '0;max-age=0;HttpOnly;Secure'
     res.cookies({'auth_token': cookie_str})
