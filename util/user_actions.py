@@ -62,7 +62,7 @@ def login(request, handler):
 
     auth_token = str(uuid.uuid4())
     hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
-    cookie_str = auth_token + "; max-age=3600; HttpOnly; Secure"
+    cookie_str = auth_token + ";max-age=3600;HttpOnly"
     user_collection.update_one({'username': username}, {'$set': {"auth_token": hashed_token}})
     res.cookies({"auth_token": cookie_str})
 
@@ -73,7 +73,7 @@ def login(request, handler):
             session_cookie = request.cookies['session']
             author = str(session_cookie)
             chat = chat_collection.update_many({"author": author}, {"$set": {"author": username}})
-            cookie_str = '0;max-age=0;HttpOnly;Secure'
+            cookie_str = '0;max-age=0;HttpOnly'
             res.cookies({"session": cookie_str})
 
     res.set_status(200, 'OK')
@@ -106,7 +106,7 @@ def logout(request, handler):
      #   cookie_str = '0;max-age=0;HttpOnly;Secure'
      #   res.cookies({"session": cookie_str})
 
-    cookie_str = '0;max-age=0;HttpOnly;Secure'
+    cookie_str = '0;max-age=0;HttpOnly'
     res.cookies({'auth_token': cookie_str})
 
 
