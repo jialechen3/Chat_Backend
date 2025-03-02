@@ -81,8 +81,6 @@ def login(request, handler):
 
 def logout(request, handler):
     res = Response()
-
-
     auth_cookie = request.cookies.get("auth_token")
 
     if not auth_cookie:
@@ -104,10 +102,10 @@ def logout(request, handler):
 
     if 'session' in request.cookies:
         session_cookie = request.cookies.get('session')
-        cookie_str = '0; max-age=0; HttpOnly; Secure'
+        cookie_str = '0;max-age=0;HttpOnly;Secure'
         res.cookies({"session": cookie_str})
 
-    cookie_str = '0; max-age=0; HttpOnly; Secure'
+    cookie_str = '0;max-age=0;HttpOnly;Secure'
     res.cookies({'auth_token': cookie_str})
 
 
