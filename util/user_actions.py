@@ -111,10 +111,7 @@ def logout(request, handler):
     res.cookies({'auth_token': cookie_str})
 
 
-    user_collection.update_one(
-        {'auth_token': hashed_token},
-        {'$set': {'auth_token': None}}
-    )
+    user_collection.update_one({'auth_token': hashed_token}, {'$set': {'auth_token': None}})
 
     res.set_status(302, 'Found')
     res.headers({"location": "/"})
@@ -186,6 +183,15 @@ def update_profile(request, handler):
     result = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
     res = Response()
+    if len(password) == 0:
+        auth_cookie = request.cookies.get("auth_token")
+        hashed_token = hashlib.sha256(auth_cookie.encode()).hexdigest()
+        user = user_collection.find_one({'auth_token': hashed_token})
+        chat = chat_collection.update_many({"author": user['username']}, {"$set": {"author": username}})
+        user_collection.update_one({'auth_token': hashed_token}, {'$set': {"username": username}})
+        res.text('user updated')
+        handler.request.sendall(res.to_data())
+
     if not validate_password(password):
         res.set_status(400, 'invalid password')
         res.text('set a stronger password!')
