@@ -1,5 +1,7 @@
 import socketserver
 
+from util.github import authcallback,authgithub
+from util.totp import generateTwoFac
 from util.chat import chat_create
 from util.chat import chat_get
 from util.chat import chat_delete
@@ -46,6 +48,13 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/api/users/@me", get_me, True)
         self.router.add_route("GET", "/api/users/search", search_user, False)
         self.router.add_route("POST", "/api/users/settings", update_profile, True)
+
+
+        self.router.add_route("POST", "/api/totp/enable", generateTwoFac, True)
+
+        self.router.add_route("GET", "/authgithub", authgithub, True)
+        self.router.add_route("GET", "/authcallback", authcallback, False)
+
 
 
 

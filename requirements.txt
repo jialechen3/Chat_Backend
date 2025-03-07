@@ -2,3 +2,4 @@ pymongo
 bcrypt
 requests
 pyotp
+dotenv

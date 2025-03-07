@@ -31,7 +31,7 @@ def extract_credentials(request):
     #body: query string username&password
     username = None
     password = None
-
+    code = None
     pairs = body.split('&')
     for pair in pairs:
         key, value = pair.split('=', 1)
@@ -39,9 +39,12 @@ def extract_credentials(request):
             username = value
         elif key == 'password':
             password = decode_(value)
+        elif key == 'totpCode':
+            code = value
 
 
-    str = [username, password]
+
+    str = [username, password, code]
     return str
 
 

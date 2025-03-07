@@ -4,6 +4,7 @@ import uuid
 
 import bcrypt
 import bson
+import pyotp
 
 from util.auth import extract_credentials
 from util.auth import validate_password
@@ -36,7 +37,8 @@ def register(request, handler):
         "userid": userid,
         "username": username,
         "password": result,
-        "auth_token": ''
+        "auth_token": '',
+        "two-factor": ''
     })
     res.text('account created')
     handler.request.sendall(res.to_data())
@@ -46,6 +48,7 @@ def login(request, handler):
     res = Response()
     username = strl[0]
     password = strl[1]
+    code = strl[2]
     user = user_collection.find_one({"username":username})
 
     if not user:
@@ -65,6 +68,23 @@ def login(request, handler):
     cookie_str = auth_token + ";Max-Age=3600;HttpOnly"
     user_collection.update_one({'username': username}, {'$set': {"auth_token": hashed_token}})
     res.cookies({"auth_token": cookie_str})
+
+    #############################Check for Two Factor####################################################################
+    if user["two-factor"] != '' and not code:
+        res.set_status(401, 'two-factor')
+        handler.request.sendall(res.to_data())
+        return
+    ###########################################################################################################################
+    twofac = user["two-factor"]
+    totp = pyotp.TOTP(twofac)
+    #digit = totp.now()
+    # code = input()
+    # print ("IsValid", totp.verify(code))
+    if not totp.verify(code):
+        res.set_status(400, 'forbidden')
+        res.text('wrong code')
+        handler.request.sendall(res.to_data())
+        return
 
     ################################################################################################################
     #######if there is a session cookie, change all the message author name remove session cookie#########################################
