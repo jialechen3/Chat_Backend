@@ -27,25 +27,25 @@ specialChars = {'!', '@', '#', '$', '%', '^', '&', '(', ')', '-', '_', '='}
 
 def extract_credentials(request):
     body = request.body.decode('utf-8')
-    #body = html.escape(set_body)
-    #body: query string username&password
+
     username = None
     password = None
     code = None
     pairs = body.split('&')
     for pair in pairs:
-        key, value = pair.split('=', 1)
-        if key == 'username':
-            username = value
-        elif key == 'password':
-            password = decode_(value)
-        elif key == 'totpCode':
-            code = value
+        if '=' in pair:
+            key, value = pair.split('=', 1)
+            if key == 'username':
+                username = value
+            elif key == 'password':
+                password = decode_(value)
+            elif key == 'totpCode':
+                code = value
 
 
 
-    str = [username, password, code]
-    return str
+    result = [username, password, code]
+    return result
 
 
 def decode_(s):
