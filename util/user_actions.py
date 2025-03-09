@@ -48,7 +48,9 @@ def login(request, handler):
     res = Response()
     username = strl[0]
     password = strl[1]
-    code = strl[2]
+    code = None
+    if len(strl) == 3:
+        code = strl[2]
     user = user_collection.find_one({"username":username})
 
     if not user:
@@ -70,21 +72,19 @@ def login(request, handler):
     res.cookies({"auth_token": cookie_str})
 
     #############################Check for Two Factor####################################################################
-    if user["two-factor"] != '' and not code:
-        res.set_status(401, 'two-factor')
-        handler.request.sendall(res.to_data())
-        return
-    ###########################################################################################################################
-    twofac = user["two-factor"]
-    totp = pyotp.TOTP(twofac)
-    #digit = totp.now()
-    # code = input()
-    # print ("IsValid", totp.verify(code))
-    if not totp.verify(code):
-        res.set_status(400, 'forbidden')
-        res.text('wrong code')
-        handler.request.sendall(res.to_data())
-        return
+    if user["two-factor"] != '':
+        if not code:
+            res.set_status(401, "Two-factor authentication")
+            handler.request.sendall(res.to_data())
+            return
+
+
+        totp = pyotp.TOTP(user["two-factor"])
+        if not totp.verify(code):
+            res.set_status(400, "Invalid")
+            res.text(json.dumps({"Invalid code"}))
+            handler.request.sendall(res.to_data())
+            return
 
     ################################################################################################################
     #######if there is a session cookie, change all the message author name remove session cookie#########################################
