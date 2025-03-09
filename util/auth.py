@@ -32,20 +32,31 @@ def extract_credentials(request):
     password = None
     code = None
     pairs = body.split('&')
+    check_pairs = []
     for pair in pairs:
         if '=' in pair:
             key, value = pair.split('=', 1)
+            check_pairs.append((key, value))
+
+    if len(check_pairs) == 2:
+        for check_pair in check_pairs:
+            key, value = check_pair
+            if key == 'username':
+                username = value
+            elif key == 'password':
+                password = decode_(value)
+        return [username, password]
+    elif len(check_pairs) == 3:
+        for check_pair in check_pairs:
+            key, value = check_pair
             if key == 'username':
                 username = value
             elif key == 'password':
                 password = decode_(value)
             elif key == 'totpCode':
                 code = value
-
-
-
-    result = [username, password, code]
-    return result
+        result = [username, password, code]
+        return result
 
 
 def decode_(s):
