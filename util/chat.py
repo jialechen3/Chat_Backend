@@ -66,7 +66,7 @@ def chat_create(request, handler):
                 if command == "/star":
                     if star(command, args, user['access_token']) == 204:
                         link = f"https://github.com/{args[0]}"
-                        content = f"Starred: <a href='{link}'>repo:{args[0]}</a>"
+                        content = f"Starred: <a href='{link}'target='_blank'>repo:{args[0]}</a>"
                     elif star(command, args, user['access_token']) == 304:
                         link = f"https://github.com/{args[0]}"
                         content = f"Already Starred: <a href='{link} target='_blank'>repo:{args[0]}</a>"
