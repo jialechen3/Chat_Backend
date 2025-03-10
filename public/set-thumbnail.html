@@ -1,0 +1,155 @@
+<div class="flex flex-col items-center w-full">
+  <div class="w-[1000px] flex flex-col gap-6">
+    <h1 class="font-bold">Set Video Thumbnail</h1>
+
+    <div class="flex flex-col gap-4">
+      <div class="grid grid-cols-3 gap-4">
+        <!-- Thumbnails will be inserted here -->
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-sm">Select Thumbnail</label>
+        <select
+          id="thumbnail-select"
+          class="w-full px-4 py-2 rounded-xl bg-gray-700 text-white"
+        >
+          <option value="">Select a thumbnail</option>
+          <option value="0">First frame</option>
+          <option value="1">Frame at 25% duration</option>
+          <option value="2">Frame at 50% duration</option>
+          <option value="3">Frame at 75% duration</option>
+          <option value="4">Last frame</option>
+        </select>
+      </div>
+
+      <button
+        id="save-button"
+        class="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700"
+      >
+        Save Thumbnail
+      </button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { html } from "/public/js/utils.js";
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const videoId = urlParams.get("videoId");
+
+  if (!videoId) {
+    window.location.href = "/videotube";
+    alertManager.newAlert(
+      "No video ID provided",
+      "error",
+      5000,
+      "Parameter Error"
+    );
+  }
+
+  const thumbnailSelect = document.getElementById("thumbnail-select");
+  const saveButton = document.getElementById("save-button");
+  const thumbnailGrid = document.querySelector(".grid");
+
+  let thumbnails = [];
+
+  async function loadThumbnails() {
+    try {
+      const response = await fetch(`/api/videos/${videoId}`);
+      if (!response.ok) {
+        alertManager.newAlert(
+          `Failed to load video thumbnails. ${response.statusText}`,
+          "error",
+          5000,
+          "Load Error"
+        );
+        return;
+      }
+
+      const data = await response.json();
+      thumbnails = data.video.thumbnails;
+
+      // Display thumbnails in grid
+      thumbnails.forEach((url, index) => {
+        const imgHTML = html`
+          <img
+            src="/${url}"
+            class="w-full aspect-video object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500"
+          />
+        `;
+        const imgContainer = document.createElement("div");
+        imgContainer.innerHTML = imgHTML;
+        const img = imgContainer.firstElementChild;
+
+        img.onclick = () => {
+          thumbnailSelect.value = index;
+          thumbnailGrid
+            .querySelectorAll("img")
+            .forEach((img) =>
+              img.classList.remove("border-blue-500", "border-2")
+            );
+          img.classList.add("border-blue-500", "border-2");
+        };
+        thumbnailGrid.appendChild(img);
+      });
+    } catch (error) {
+      console.error("Error loading thumbnails:", error);
+      alertManager.newAlert(
+        "Failed to load thumbnails. Please try again.",
+        "error",
+        5000,
+        "Load Error"
+      );
+    }
+  }
+
+  saveButton.addEventListener("click", async () => {
+    const selectedIndex = thumbnailSelect.value;
+    if (!selectedIndex && selectedIndex !== 0) {
+      alertManager.newAlert(
+        "Please select a thumbnail first.",
+        "error",
+        5000,
+        "Selection Error"
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/thumbnails/${videoId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          thumbnailURL: thumbnails[selectedIndex],
+        }),
+      });
+
+      if (response.ok) {
+        alertManager.newAlert(
+          "Thumbnail updated successfully!",
+          "success",
+          5000,
+          "Success"
+        );
+        // Redirect back to video page
+        window.location.href = `/videotube/videos/${videoId}`;
+      } else {
+        throw new Error("Update failed");
+      }
+    } catch (error) {
+      console.error("Error updating thumbnail:", error);
+      alertManager.newAlert(
+        "Failed to update thumbnail. Please try again.",
+        "error",
+        5000,
+        "Update Error"
+      );
+    }
+  });
+
+  // Load thumbnails when page loads
+  loadThumbnails();
+</script>

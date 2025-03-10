@@ -1,0 +1,189 @@
+<div class="flex flex-col items-center w-full">
+  <div class="w-[500px] flex flex-col gap-6">
+    <h1 class="font-bold">Change Avatar</h1>
+
+    <div class="flex items-center justify-center mb-4">
+      <img
+        id="current-avatar"
+        src="/public/imgs/user.webp"
+        alt="Current Avatar"
+        class="w-32 h-32 rounded-full border-2 border-gray-500"
+      />
+    </div>
+
+    <form id="avatar-form" class="flex flex-col gap-6">
+      <div class="flex flex-col gap-2">
+        <label class="text-sm">Profile Picture</label>
+        <div
+          id="file-drop-area"
+          class="relative w-full h-32 border-2 border-dashed border-gray-500 rounded-xl flex items-center justify-center cursor-pointer hover:border-gray-400 group"
+        >
+          <input
+            type="file"
+            id="avatar-file"
+            name="avatar"
+            class="hidden"
+            accept=".png,.jpg,.jpeg,.gif"
+            required
+          />
+          <div
+            id="upload-placeholder"
+            class="text-gray-400 group-hover:text-gray-300"
+          >
+            Click to select an image (PNG, JPG, or GIF)
+          </div>
+          <div id="file-info" class="hidden flex items-center gap-2">
+            <span id="filename" class="text-sm"></span>
+            <button
+              type="button"
+              id="remove-file"
+              class="text-gray-400 hover:text-gray-300"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700"
+      >
+        Update Avatar
+      </button>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  const form = document.getElementById("avatar-form");
+  const fileInput = document.getElementById("avatar-file");
+  const dropArea = document.getElementById("file-drop-area");
+  const uploadPlaceholder = document.getElementById("upload-placeholder");
+  const fileInfo = document.getElementById("file-info");
+  const filename = document.getElementById("filename");
+  const removeFile = document.getElementById("remove-file");
+  const currentAvatar = document.getElementById("current-avatar");
+
+  // Fetch current user data and update avatar
+  async function fetchUserData() {
+    try {
+      const response = await fetch("/api/users/@me");
+
+      if (response.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user data");
+      }
+
+      const userData = await response.json();
+      if (userData.imageURL) {
+        currentAvatar.src = userData.imageURL;
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      alertManager.newAlert(
+        "Failed to load current avatar.",
+        "error",
+        5000,
+        "Load Error"
+      );
+    }
+  }
+
+  // Fetch user data when page loads
+  fetchUserData();
+
+  dropArea.addEventListener("click", () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener("change", updateFileInfo);
+  removeFile.addEventListener("click", clearFile);
+
+  function updateFileInfo() {
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      const fileExtension = file.name.split(".").pop().toLowerCase();
+
+      if (!["png", "jpg", "jpeg", "gif"].includes(fileExtension)) {
+        alertManager.newAlert(
+          "Please select a PNG, JPG, or GIF image file.",
+          "error",
+          5000,
+          "Upload Error"
+        );
+        return;
+      }
+
+      filename.textContent = file.name;
+      uploadPlaceholder.classList.add("hidden");
+      fileInfo.classList.remove("hidden");
+
+      // Preview the selected file
+      //   const reader = new FileReader();
+      //   reader.onload = function (e) {
+      //     currentAvatar.src = e.target.result;
+      //   };
+      //   reader.readAsDataURL(file);
+    } else {
+      clearFile();
+    }
+  }
+
+  function clearFile(e) {
+    e?.preventDefault();
+    e?.stopPropagation();
+    fileInput.value = "";
+    uploadPlaceholder.classList.remove("hidden");
+    fileInfo.classList.add("hidden");
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const file = fileInput.files[0];
+    if (!file) {
+      alertManager.newAlert(
+        "Please select an image file.",
+        "error",
+        5000,
+        "Upload Error"
+      );
+      return;
+    }
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch("/api/users/avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        alertManager.newAlert(
+          "Avatar updated successfully!",
+          "success",
+          5000,
+          "Success"
+        );
+        setTimeout(() => {
+          window.location.reload();
+        }, 200);
+      } else {
+        throw new Error("Upload failed");
+      }
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      alertManager.newAlert(
+        "Failed to update avatar. Please try again.",
+        "error",
+        5000,
+        "Upload Error"
+      );
+    }
+  });
+</script>

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <title>312site.com</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
     <link rel="icon" type="image/x-icon" href="/public/imgs/favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -131,13 +131,19 @@
             <a href="/settings">Settings</a>
           </div>
 
-          <!-- <label>Homework 3</label>
+          <label>Homework 3</label>
+
           <div class="nav-group">
-            <i data-lucide="graduation-cap"></i>
-            <a href="/312learn">312learn</a>
+            <i data-lucide="circle-user-round"></i>
+            <a href="/change-avatar">Change Avatar</a>
           </div>
 
-          <label>Homework 4</label>
+          <div class="nav-group">
+            <i data-lucide="video"></i>
+            <a href="/videotube">VideoTube</a>
+          </div>
+
+          <!-- <label>Homework 4</label>
           <div class="nav-group">
             <i data-lucide="pen-tool"></i>
             <a href="/drawing-board">Drawing Board</a>
@@ -148,7 +154,8 @@
       <!-- Content Section -->
       <div class="flex flex-col gap-4 flex-grow">
         <div class="justify-between flex items-center px-8 py-2 border-b-2">
-          <p class="text-sm">Last page visited: /home</p>
+          <!-- <p class="text-sm">Last page visited: /home</p> -->
+          <p></p>
 
           <div class="flex flex-row gap-x-2">
             <a
@@ -175,7 +182,9 @@
           </div>
         </div>
 
-        <div class="h-full mx-8 h-fit overflow-y-auto pb-16">{{content}}</div>
+        <div class="h-full mx-8 h-fit overflow-y-auto pb-16 w-full">
+          {{content}}
+        </div>
       </div>
     </div>
 
@@ -206,5 +215,6 @@
       main();
     </script>
     <script src="/public/js/alertManager.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   </body>
 </html>

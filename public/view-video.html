@@ -1,0 +1,164 @@
+<div class="flex flex-col w-full max-w-4xl mx-auto gap-6">
+    <div class="flex flex-col gap-4">
+        <video
+                id="video-player"
+                controls
+                class="w-full aspect-video bg-gray-800 rounded-xl"
+        >
+            Your browser does not support the video tag.
+        </video>
+        <label>Quality:
+            <select id="qualitySelect"
+                    class="appearance-none bg-transparent text-white pl-3 pr-8 py-1.5 rounded border border-white [&>option]:bg-transparent [&>option]:text-black"
+            >
+                <option value="auto">Auto</option>
+            </select>
+        </label>
+        <div class="flex flex-col gap-2">
+            <h1 id="video-title" class="text-2xl font-bold"></h1>
+            <div class="flex items-center gap-3">
+                <img
+                        id="uploader-avatar"
+                        src="/public/imgs/user.webp"
+                        alt="Uploader Avatar"
+                        class="w-10 h-10 rounded-full border border-gray-300"
+                />
+                <div class="flex flex-col">
+                    <p id="uploader-name" class="text-sm">Video Uploader</p>
+                    <div class="flex gap-1 text-sm text-gray-500">
+                        <!--            <span id="video-views">0 views</span>-->
+                        <span>•</span>
+                        <span id="upload-date">Uploaded on 2025-02-25</span>
+                    </div>
+                </div>
+                <a
+                        id="set-thumbnail-link"
+                        class="ml-auto text-sm text-blue-500 hover:underline"
+                >
+                    Set Thumbnail
+                </a>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-2 mt-4">
+            <h3 class="font-semibold">Description</h3>
+            <p
+                    id="video-description"
+                    class="text-sm text-gray-300 whitespace-pre-wrap"
+            ></p>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    const videoId = window.location.pathname.split("/").pop();
+    const videoPlayer = document.getElementById("video-player");
+    const videoTitle = document.getElementById("video-title");
+    const videoDescription = document.getElementById("video-description");
+    const setThumbnailLink = document.getElementById("set-thumbnail-link");
+
+    // Set the thumbnail link href
+    setThumbnailLink.href = `/videotube/set-thumbnail?videoId=${videoId}`;
+
+    async function loadVideo() {
+        try {
+            const response = await fetch(`/api/videos/${videoId}`);
+            if (!response.ok) {
+                alertManager.newAlert(
+                    `Failed to load video. ${response.statusText}`,
+                    "error",
+                    5000,
+                    "Load Error"
+                );
+                return;
+            }
+
+            const data = await response.json();
+            const video = data.video;
+
+            if (video.hls_path) {
+                // load as an hls video
+                const hls = new Hls();
+                const select = document.getElementById('qualitySelect');
+
+                hls.loadSource(`/${video.hls_path}`);  // Your HLS URL
+                hls.attachMedia(videoPlayer);
+
+                hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+                    console.log("Available bitrates:", data.levels);
+
+                    // Populate quality selection dropdown
+                    data.levels.forEach((level, index) => {
+                        const option = document.createElement("option");
+                        option.value = index;
+                        option.text = `${level.height}p (${level.bitrate / 1000} kbps)`;
+                        select.appendChild(option);
+                    });
+                });
+
+                // Change bitrate on selection
+                select.addEventListener("change", function () {
+                    if (select.value === "auto") {
+                        hls.currentLevel = -1; // Auto
+                    } else {
+                        hls.currentLevel = parseInt(select.value);
+                    }
+                });
+
+            } else {
+                // Load as mp4
+                videoPlayer.src = `/${video.video_path}`;
+            }
+
+            // Update metadata
+            videoTitle.innerHTML = video.title;
+            videoDescription.innerHTML = video.description;
+
+            // Format and set the upload date
+            const uploadDate = new Date().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            });
+            document.getElementById(
+                "upload-date"
+            ).textContent = `Uploaded on ${uploadDate}`;
+        } catch (error) {
+            console.error("Error loading video:", error);
+            alertManager.newAlert(
+                "Failed to load video. Please try again.",
+                "error",
+                5000,
+                "Load Error"
+            );
+        }
+    }
+
+    async function fetchTranscription(videoId) {
+      try {
+        const response = await fetch(`/api/transcriptions/${videoId}`);
+
+        if (response.ok) {
+          // Create and add the subtitle track
+          const track = document.createElement("track");
+          track.kind = "subtitles";
+          track.label = "English";
+          track.srclang = "en";
+          track.src = `/api/transcriptions/${videoId}`;
+          track.default = true;
+
+          // Add the track to the video element
+          videoPlayer.appendChild(track);
+        } else {
+          const errorData = await response.json();
+          console.error("Error fetching transcription:", errorData.error);
+        }
+      } catch (error) {
+        console.error("Error fetching transcription:", error);
+      }
+    }
+
+    // Load the video when the page loads
+    loadVideo();
+    fetchTranscription(videoId);
+</script>

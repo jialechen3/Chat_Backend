@@ -1,0 +1,161 @@
+<div class="flex flex-col items-center w-full">
+  <div class="w-[500px] flex flex-col gap-6">
+    <h1 class="font-bold">Upload Video</h1>
+
+    <form id="upload-form" class="flex flex-col gap-6">
+      <div class="flex flex-col gap-2">
+        <label class="text-sm">Title</label>
+        <input
+          type="text"
+          name="title"
+          class="w-full px-4 py-2 rounded-xl bg-gray-700 text-white"
+          required
+        />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-sm">Description</label>
+        <textarea
+          name="description"
+          rows="4"
+          class="w-full px-4 py-2 rounded-xl bg-gray-700 resize-none text-white"
+          required
+        ></textarea>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-sm">Video File</label>
+        <div
+          id="file-drop-area"
+          class="relative w-full h-32 border-2 border-dashed border-gray-500 rounded-xl flex items-center justify-center cursor-pointer hover:border-gray-400 group"
+        >
+          <input
+            type="file"
+            id="video-file"
+            name="video"
+            class="hidden"
+            accept=".mp4"
+            required
+          />
+          <div
+            id="upload-placeholder"
+            class="text-gray-400 group-hover:text-gray-300"
+          >
+            Click to select a video (MP4 only)
+          </div>
+          <div id="file-info" class="hidden flex items-center gap-2">
+            <span id="filename" class="text-sm"></span>
+            <button
+              type="button"
+              id="remove-file"
+              class="text-gray-400 hover:text-gray-300"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700"
+      >
+        Upload Video
+      </button>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  // Check if user is logged in, redirect to register if not
+  fetch("/api/users/@me").then((response) => {
+    if (response.status === 400 || response.status === 401) {
+      window.location.href = "/register";
+    }
+  });
+
+  const form = document.getElementById("upload-form");
+  const fileInput = document.getElementById("video-file");
+  const dropArea = document.getElementById("file-drop-area");
+  const uploadPlaceholder = document.getElementById("upload-placeholder");
+  const fileInfo = document.getElementById("file-info");
+  const filename = document.getElementById("filename");
+  const removeFile = document.getElementById("remove-file");
+
+  dropArea.addEventListener("click", () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener("change", updateFileInfo);
+  removeFile.addEventListener("click", clearFile);
+
+  function updateFileInfo() {
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      const fileExtension = file.name.split(".").pop().toLowerCase();
+
+      if (!["mp4"].includes(fileExtension)) {
+        alertManager.newAlert(
+          "Please select an MP4 video file.",
+          "error",
+          5000,
+          "Upload Error"
+        );
+        return;
+      }
+
+      filename.textContent = file.name;
+      uploadPlaceholder.classList.add("hidden");
+      fileInfo.classList.remove("hidden");
+    } else {
+      clearFile();
+    }
+  }
+
+  function clearFile(e) {
+    e?.preventDefault();
+    e?.stopPropagation();
+    fileInput.value = "";
+    uploadPlaceholder.classList.remove("hidden");
+    fileInfo.classList.add("hidden");
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const file = fileInput.files[0];
+    if (!file) {
+      alertManager.newAlert(
+        "Please select a video file.",
+        "error",
+        5000,
+        "Upload Error"
+      );
+      return;
+    }
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch("/api/videos", {
+        method: "POST",
+        body: formData,
+        // do NOT manually set content type, it will be set by the browser
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        window.location.href = `/videotube/videos/${result.id}`;
+      } else {
+        throw new Error("Upload failed");
+      }
+    } catch (error) {
+      console.error("Error uploading video:", error);
+      alertManager.newAlert(
+        "Failed to upload video. Please try again.",
+        "error",
+        5000,
+        "Upload Error"
+      );
+    }
+  });
+</script>
