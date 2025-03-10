@@ -25,7 +25,7 @@ def authgithub(request, handler):
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": redirect_url,
-        "scope": "user:email,repo",
+        "scope": "user:email,repo"
     }
     for key, value in params.items():
         url += f"{key}={value}&"
@@ -106,3 +106,76 @@ def authcallback(request, handler):
     res.headers({"location": "/"})
 
     handler.request.sendall(res.to_data())
+
+
+def handler_command(command, args, access_token):
+
+        if command == "/repos":
+            if len(args) != 1:
+                return None
+            print("Command")
+            temp = repos(command, args, access_token)
+            return temp
+        elif command == "/star":
+            if len(args) != 1:
+                return None
+            return star(command, args, access_token)
+        elif command == "/createissue":
+            if len(args) != 2:
+                print("debug: issue")
+                return None
+            return createissue(command, args, access_token)
+        else:
+            return None
+
+
+def repos(command, args, access_token):
+    user = args[0]
+    repos_url = f"https://api.github.com/users/{user}/repos?per_page=50"
+    response = requests.get(repos_url, headers={"Authorization": f"Bearer {access_token}"})
+    if response.status_code != 200:
+        return None
+    reposs = response.json()
+    if not reposs:
+        return None
+
+    repo_links = []
+    for repo in reposs:
+        repo_link = f'<a href="{repo["html_url"]}">{repo["name"]}</a>'
+        repo_links.append(repo_link)
+    repo_links_html = "<br>".join(repo_links)
+    return repo_links_html
+
+
+
+def star(command, args, access_token):
+    name = args[0]
+    # test
+    test_response = requests.get("https://api.github.com/user", headers={"Authorization": f"Bearer {access_token}"})
+    url = f"https://api.github.com/user/starred/{name}"
+    response = requests.put(url, headers={"Authorization": f"Bearer {access_token}"})
+
+
+    if response.status_code == 204:
+        return 204
+    elif response.status_code == 304:
+        return 304
+    else:
+        return 404
+
+
+def createissue(command, args, access_token):
+    repo = args[0]
+    title = args[1]
+
+
+    user = user_collection.find_one({"access_token": access_token})
+    username = user["username"]
+    url = f"https://api.github.com/repos/{repo}/issues"
+    response = requests.post(url, json={"title": title, "body": ""}, headers={"Authorization": f"Bearer {access_token}"})
+    print(response.status_code)
+    if response.status_code == 201:
+        issue_url = response.json()['html_url']
+        return 201
+    else:
+        return 400

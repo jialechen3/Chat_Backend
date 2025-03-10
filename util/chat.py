@@ -7,6 +7,7 @@ import requests
 import bson.json_util
 
 from util.database import chat_collection, user_collection
+from util.github import handler_command, repos, star, createissue
 from util.response import Response
 
 
@@ -33,9 +34,66 @@ def chat_create(request, handler):
         if cookie.startswith('auth_token'):
             logged = True
 
-    ##########################################################################################
+    ############################################Github Api Command#################################################
+    if content[0] == '/':
+        if not logged:
+            print("Test2: not logged")
+            res.set_status(400, 'forbidden')
+            res.text('you are not logged in')
+            handler.request.sendall(res.to_data())
+            return
+
+    auth_token = request.cookies.get('auth_token')
+    hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
+    user = user_collection.find_one({"auth_token": hashed_token})
+    if not user['access_token']:
+        print("Test3: no access token")
+        res.set_status(400, 'forbidden')
+        res.text('you are not github user')
+        handler.request.sendall(res.to_data())
+        return
+    else:
+        access_token = user['access_token']
+        parts = content.split()
+        command = parts[0]  #("/repos")
+        args = parts[1:]  #(["user"])
+
+        if not handler_command(command, args, user['access_token']):
+            res.set_status(400, 'forbidden')
+            res.text('wrong command')
+            handler.request.sendall(res.to_data())
+            return
+        else:
+            if command == "/star":
+                if star(command, args, user['access_token']) == 204:
+                    link = f"https://github.com/{args[0]}"
+                    content = f"Starred: <a href='{link}'>repo:{args[0]}</a>"
+                elif star(command, args, user['access_token']) == 304:
+                    link = f"https://github.com/{args[0]}"
+                    content = f"Already Starred: <a href='{link}'>repo:{args[0]}</a>"
+                else:
+                    res.set_status(400, 'forbidden')
+                    res.text('no repo')
+                    handler.request.sendall(res.to_data())
+                    return
+            elif command == "/repos":
+                content = ("<br>The repo for this user:<br>" + handler_command(command, args, user['access_token']))
+            elif command == "/createissue":
+                if createissue(command, args, user['access_token']) == 201:
+                    repo = args[0]
+                    url = f"https://api.github.com/repos/{repo}/issues"
+                    content = f"Issue created: <a href='{url}' target='_blank'>repo:{args[0]}</a>"
+                else:
+                    res.set_status(400, 'forbidden')
+                    res.text('no repo for issue create')
+                    handler.request.sendall(res.to_data())
+                    return
+    ############################################END GITHUB#########################################################
+
+
+    #####################################if there is a session cookie######################################
     for cookie in request.cookies:
-        if cookie.startswith('session'):   #if there is a session cookie
+        if cookie.startswith('session'):
             session_cookie = request.cookies['session']
             author = str(session_cookie)
             cookie_str = author + "; Expires=Wed, 21 Oct 2025 07:28:00 GMT; Secure; Path=/"
@@ -86,7 +144,7 @@ def chat_create(request, handler):
 
         #######################################################################################
         #adding profile img
-        # adding img
+        #adding img
         url = f'https://api.dicebear.com/9.x/fun-emoji/svg?seed={author}'
         response = requests.get(url)
         filename = f"avatar_{author}.svg"  # filename unique
@@ -94,7 +152,7 @@ def chat_create(request, handler):
         # write content to file
         with open(filepath, "wb") as f:
             f.write(response.content)
-        # end adding image
+        #end adding image
         ########################################################################################
 
 
@@ -137,7 +195,7 @@ def chat_create(request, handler):
     res.bytes(b'message sent')
     res.headers({'Content-Type': 'application/json'})
     handler.request.sendall(res.to_data())
-    #print("A create length:" + res.heads['Content-Length'])
+
 
 def chat_delete(request, handler):
 
