@@ -121,12 +121,10 @@ def handler_command(command, args, access_token):
                 return None
             return star(command, args, access_token)
         elif command == "/createissue":
-            arg = args[0].split(' ', 1)
-            if len(arg) != 2:
-                print("length:", len(arg))
+            if len(args) != 2:
                 print("debug: issue")
                 return None
-            return createissue(command, arg, access_token)
+            return createissue(command, args, access_token)
         else:
             return None
 
@@ -143,7 +141,7 @@ def repos(command, args, access_token):
 
     repo_links = []
     for repo in reposs:
-        repo_link = f"<a href='{repo["html_url"]}' target='_blank'>repo:{repo["name"]}</a>"
+        repo_link = f'<a href="{repo["html_url"]}" target="_blank">{repo["name"]}</a>'
         repo_links.append(repo_link)
     repo_links_html = "<br>".join(repo_links)
     return repo_links_html
@@ -167,9 +165,9 @@ def star(command, args, access_token):
 
 
 def createissue(command, args, access_token):
-    print("Test arg:", args)
     repo = args[0]
     title = args[1]
+
 
     user = user_collection.find_one({"access_token": access_token})
     username = user["username"]

@@ -54,8 +54,8 @@ def chat_create(request, handler):
         else:
             access_token = user['access_token']
             parts = content.split()
-            command = parts[0]  # ("/repos")
-            args = parts[1:]  # (["user"])
+            command = parts[0]  #("/repos")
+            args = parts[1:]  #(["user"])
 
             if not handler_command(command, args, user['access_token']):
                 res.set_status(400, 'forbidden')
@@ -69,7 +69,7 @@ def chat_create(request, handler):
                         content = f"Starred: <a href='{link}'>repo:{args[0]}</a>"
                     elif star(command, args, user['access_token']) == 304:
                         link = f"https://github.com/{args[0]}"
-                        content = f"Already Starred: <a href='{link}' target='_blank'>repo:{args[0]}</a>"
+                        content = f"Already Starred: <a href='{link} target='_blank'>repo:{args[0]}</a>"
                     else:
                         res.set_status(400, 'forbidden')
                         res.text('no repo')
@@ -80,8 +80,7 @@ def chat_create(request, handler):
                 elif command == "/createissue":
                     if createissue(command, args, user['access_token']) == 201:
                         repo = args[0]
-                        print("repo: " + repo)
-                        url = f"https://api.github.com/repos/{repo}/issues"
+                        url = f"https://github.com/{repo}"
                         content = f"Issue created: <a href='{url}' target='_blank'>repo:{args[0]}</a>"
                     else:
                         res.set_status(400, 'forbidden')
