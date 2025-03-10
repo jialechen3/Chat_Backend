@@ -43,51 +43,50 @@ def chat_create(request, handler):
             handler.request.sendall(res.to_data())
             return
 
-    auth_token = request.cookies.get('auth_token')
-    hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
-    user = user_collection.find_one({"auth_token": hashed_token})
-    if not user['access_token']:
-        print("Test3: no access token")
-        res.set_status(400, 'forbidden')
-        res.text('you are not github user')
-        handler.request.sendall(res.to_data())
-        return
-    else:
-        access_token = user['access_token']
-        parts = content.split()
-        command = parts[0]  #("/repos")
-        args = parts[1:]  #(["user"])
-
-        if not handler_command(command, args, user['access_token']):
+        auth_token = request.cookies.get('auth_token')
+        hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
+        user = user_collection.find_one({"auth_token": hashed_token})
+        if not 'access_token' in user:
             res.set_status(400, 'forbidden')
-            res.text('wrong command')
+            res.text('you are not github user')
             handler.request.sendall(res.to_data())
             return
         else:
-            if command == "/star":
-                if star(command, args, user['access_token']) == 204:
-                    link = f"https://github.com/{args[0]}"
-                    content = f"Starred: <a href='{link}'>repo:{args[0]}</a>"
-                elif star(command, args, user['access_token']) == 304:
-                    link = f"https://github.com/{args[0]}"
-                    content = f"Already Starred: <a href='{link}'>repo:{args[0]}</a>"
-                else:
-                    res.set_status(400, 'forbidden')
-                    res.text('no repo')
-                    handler.request.sendall(res.to_data())
-                    return
-            elif command == "/repos":
-                content = ("<br>The repo for this user:<br>" + handler_command(command, args, user['access_token']))
-            elif command == "/createissue":
-                if createissue(command, args, user['access_token']) == 201:
-                    repo = args[0]
-                    url = f"https://api.github.com/repos/{repo}/issues"
-                    content = f"Issue created: <a href='{url}' target='_blank'>repo:{args[0]}</a>"
-                else:
-                    res.set_status(400, 'forbidden')
-                    res.text('no repo for issue create')
-                    handler.request.sendall(res.to_data())
-                    return
+            access_token = user['access_token']
+            parts = content.split()
+            command = parts[0]  #("/repos")
+            args = parts[1:]  #(["user"])
+
+            if not handler_command(command, args, user['access_token']):
+                res.set_status(400, 'forbidden')
+                res.text('wrong command')
+                handler.request.sendall(res.to_data())
+                return
+            else:
+                if command == "/star":
+                    if star(command, args, user['access_token']) == 204:
+                        link = f"https://github.com/{args[0]}"
+                        content = f"Starred: <a href='{link}'>repo:{args[0]}</a>"
+                    elif star(command, args, user['access_token']) == 304:
+                        link = f"https://github.com/{args[0]}"
+                        content = f"Already Starred: <a href='{link}'>repo:{args[0]}</a>"
+                    else:
+                        res.set_status(400, 'forbidden')
+                        res.text('no repo')
+                        handler.request.sendall(res.to_data())
+                        return
+                elif command == "/repos":
+                    content = ("<br>The repo for this user:<br>" + handler_command(command, args, user['access_token']))
+                elif command == "/createissue":
+                    if createissue(command, args, user['access_token']) == 201:
+                        repo = args[0]
+                        url = f"https://api.github.com/repos/{repo}/issues"
+                        content = f"Issue created: <a href='{url}' target='_blank'>repo:{args[0]}</a>"
+                    else:
+                        res.set_status(400, 'forbidden')
+                        res.text('no repo for issue create')
+                        handler.request.sendall(res.to_data())
+                        return
     ############################################END GITHUB#########################################################
 
 
