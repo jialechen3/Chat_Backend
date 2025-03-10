@@ -53,10 +53,10 @@ def chat_create(request, handler):
             return
         else:
             access_token = user['access_token']
-            parts = content.split()
+            parts = content.split(' ', 1)
             command = parts[0]  #("/repos")
             args = parts[1:]  #(["user"])
-
+            print(args)
             if not handler_command(command, args, user['access_token']):
                 res.set_status(400, 'forbidden')
                 res.text('wrong command')
@@ -78,8 +78,8 @@ def chat_create(request, handler):
                 elif command == "/repos":
                     content = ("<br>The repo for this user:<br>" + handler_command(command, args, user['access_token']))
                 elif command == "/createissue":
-                    if createissue(command, args, user['access_token']) == 201:
-                        repo = args[0]
+                    if handler_command(command, args, user['access_token']) == 201:
+                        repo = args[0].split(' ', 1)[0]
                         url = f"https://github.com/{repo}"
                         content = f"Issue created: <a href='{url}' target='_blank'>repo:{args[0]}</a>"
                     else:

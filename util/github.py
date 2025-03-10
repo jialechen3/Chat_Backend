@@ -121,10 +121,13 @@ def handler_command(command, args, access_token):
                 return None
             return star(command, args, access_token)
         elif command == "/createissue":
-            if len(args) != 2:
+            arg = args[0].split(' ', 1)
+            print(arg)
+            print(len(arg))
+            if len(arg) != 2:
                 print("debug: issue")
                 return None
-            return createissue(command, args, access_token)
+            return createissue(command, arg, access_token)
         else:
             return None
 
