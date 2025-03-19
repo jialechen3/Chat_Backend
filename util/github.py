@@ -42,16 +42,14 @@ def authgithub(request, handler):
 
 def authcallback(request, handler):
     res = Response()
-
     body = request.path
-
     code = body.split('=')[-1]
 
     if not code:
         res.set_status(400, "no user")
         handler.request.sendall(res.to_data())
         return
-
+############################################################access token############################################################
     redirect_ult = "https://github.com/login/oauth/access_token"
     params = {
         "client_id": os.getenv("GITHUB_CLIENT_ID"),
@@ -72,7 +70,8 @@ def authcallback(request, handler):
         res.set_status(400, 'no token')
         handler.request.sendall(res.to_data())
         return
-
+##########################################################################################################################################################
+#################################################################getting user permission###################################################################
     user_url = "https://api.github.com/user"
 
     response = requests.get(user_url, headers={"Authorization": f"Bearer {access_token}"})

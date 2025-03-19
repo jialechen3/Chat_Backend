@@ -62,10 +62,11 @@ def test1():
     # It's recommended that you complete this test and add others, including at least one
     # test using a POST request. Also, ensure that the types of all values are correct
 def test2():
-    request = Request(b"PATCH /api/chat/{id} HTTP/1.1\r\nHost: localhost:8080\r\nCookie: session=X6kAwpgW29M; visits=4\r\nCookie: auth_token=123wasd;\r\n\r\nUpdated Content")
+    request = Request(b"PATCH /api/chat/{id} HTTP/1.1\r\nHost: localhost:8080\r\nContent-Disposition: form-data; name='commenter'\r\nCookie: session=X6kAwpgW29M; visits=4\r\n\r\nUpdated Content")
     print(request.cookies)
     print(request.body)
     print(request.path)
+    print(request.headers)
     assert request.method == "PATCH"
     assert request.headers["Host"] == "localhost:8080"  # note: The leading space in the header value must be removed
     assert request.body == b"Updated Content"
