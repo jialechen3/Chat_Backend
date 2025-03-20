@@ -5,7 +5,8 @@ from util.parts_class import PartOfMulti, Multipart
 
 def parse_multipart(request):
     print("yes")
-    byte_str = request.split(b"\r\n\r\n", 1)
+    req = request
+    byte_str = req.split(b"\r\n\r\n", 1)
 
     str1 = byte_str[0].decode()
 
