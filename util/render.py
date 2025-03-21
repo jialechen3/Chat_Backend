@@ -18,6 +18,8 @@ def render(request, handler):
         file_name = 'public/settings.html'
     elif request.path == '/search-users':
         file_name = 'public/search-users.html'
+    elif request.path == '/change-avatar':
+        file_name = 'public/change-avatar.html'
     else:
         handler.request.sendall(b"HTTP/1.1 404 Not Found\r\n\r\nPage not found")
         return

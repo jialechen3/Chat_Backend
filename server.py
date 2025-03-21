@@ -24,6 +24,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/hello", hello_path, True)
         # TODO: Add your routes here
 
+        ########This is where all the rendering goes#########################################
         self.router.add_route("GET", "/public", extractor, False)
         self.router.add_route("GET", "/", render, True)
         self.router.add_route("GET", "/chat", render, True)
@@ -31,8 +32,10 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/login", render, True)
         self.router.add_route("GET", "/settings", render, True)
         self.router.add_route("GET", "/search-users", render, True)
+        self.router.add_route("GET", "/change-avatar", render, True)
 
 
+        #####################The basic function of the chat#####################################
         self.router.add_route("POST", "/api/chats", chat_create, True)
         self.router.add_route("GET", "/api/chats", chat_get, True)
         self.router.add_route("PATCH", "/api/chats", chat_update, False)
@@ -42,16 +45,19 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("PATCH", "/api/nickname", nickname, True)
 
 
+        ##############################User functions#########################################
         self.router.add_route("POST", "/register", register, True)
         self.router.add_route("GET", "/logout", logout, True)
         self.router.add_route("POST", "/login", login, True)
         self.router.add_route("GET", "/api/users/@me", get_me, True)
         self.router.add_route("GET", "/api/users/search", search_user, False)
         self.router.add_route("POST", "/api/users/settings", update_profile, True)
+        ################################Avatar upload##################################
+        self.router.add_route("POST", "/api/users/settings", update_profile, True)
+        ####################Two factor authentication###############################
+        self.router.add_route("POST", "/api/users/avatar", generateTwoFac, True)
 
-
-        self.router.add_route("POST", "/api/totp/enable", generateTwoFac, True)
-
+        ########################GITHUB Login#######################################
         self.router.add_route("GET", "/authgithub", authgithub, True)
         self.router.add_route("GET", "/authcallback", authcallback, False)
 

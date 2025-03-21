@@ -41,14 +41,14 @@ def parse_multipart(request):
         content = b""
         #the headers
         byte_heads = part.split(b"\r\n\r\n", 1)
-        print(part)
+        #print(part)
         heads = byte_heads[0].decode()
 
         #divide by each line
         head = heads.split("\r\n")
 
         for line in head:
-            #print(line)
+            print(line)
             header_key = line.split(":")[0]
             header_value = line.split(":",1)[1]
             headers[header_key] = header_value.strip()

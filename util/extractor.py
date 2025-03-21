@@ -9,6 +9,7 @@ MIME_TYPES = {
     "jpg": "image/jpg",
     "webp": "image/webp",
     "gif": "image/gif",
+    "png": "image/png",
     "ico": "image/x-icon",
     "svg": "image/svg+xml"
 }
@@ -26,20 +27,7 @@ def extractor(request, handler):
         content = out_file.read()
         res.bytes(content)
         mime_type["Content-Length"] = str(len(content))
-        print(mime_type)
         res.headers(mime_type)
-
-
-        #if 'image' == _type.split('/')[0]:
-            #res.bytes(out_file)
-        #if 'javascript' == _type.split('/')[1]:
-        #    print(out_file)
-         #   res.json(json.loads(out_file))
-        #if 'text' == _type.split('/')[0]:
-           # content = out_file
-           # res.bytes(content)
-
-
 
     res.headers(mime_type)
     handler.request.sendall(res.to_data())

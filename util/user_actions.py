@@ -38,7 +38,8 @@ def register(request, handler):
         "username": username,
         "password": result,
         "auth_token": '',
-        "two-factor": ''
+        "two-factor": '',
+        "imageURL": ''
     })
     res.text('account created')
     handler.request.sendall(res.to_data())
