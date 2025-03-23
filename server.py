@@ -85,9 +85,10 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         if "Content-Length" in request.headers:
             length = int(request.headers['Content-Length'])
             print("Length in server:", length)
-            while len(received_data) < length:
-                chunk = self.request.recv(2048)
+            while len(received_data) <= length:
+                chunk = self.request.recv(4096)
                 received_data += chunk
+            print("FINAL length in server:", len(received_data))
         request = Request(received_data)
         self.router.route_request(request, self)
 

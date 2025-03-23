@@ -33,7 +33,9 @@ def avatar_upload(request, handler):
     mime_type = avatar_part.headers['Content-Type']
 
     _type = mime_type.split('/')[1]
-
+    #if _type != 'jpeg' or 'jpg' or 'gif' or 'png':
+        #res.set_status(400, 'bad request')
+        #handler.request.sendall(res.to_data())
     filename = f"{avatar_id}.{_type}"
     filepath = os.path.join(img_dir, filename)
 
@@ -60,6 +62,8 @@ def avatar_upload(request, handler):
         return
 
     user_collection.update_one({'auth_token': hashed_token}, {'$set': {'imageURL': f"{img_dir}/{filename}"}})
+    mime = {'Content-Type': mime_type}
+    res.headers(mime)
 
     res.set_status(200, 'ok')
     handler.request.sendall(res.to_data())

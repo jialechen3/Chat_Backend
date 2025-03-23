@@ -9,13 +9,14 @@ def parse_multipart(request):
 
     content_type = request.headers['Content-Type']
     orig_boundary = content_type.strip().split('boundary=')[-1]
-    boundary = '--' + orig_boundary
-    boundary = boundary.encode() + b'\r\n'
+    boundary = '--' + orig_boundary  + '\r\n'
+    boundary = boundary.encode()
 
     #------WebKitFormBoundaryv1tp9x8MX628OUBX
     multi = req.split(boundary)
 
     full_multiparts = []
+
     #now we go through each of the multi parts and stores its headers
     #part is in bytes
     for part in multi[1:]:
@@ -37,16 +38,16 @@ def parse_multipart(request):
             if header_key == 'Content-Disposition':
                 name = header_value.split("name=")[1].split(";")[0].strip('"')
 
-
-        #the body content
         content = byte_heads[1]
+
         if content.endswith(b'\r\n'):
             content = content[:-2]
 
-        #check if the content has the closing boundary marker
-        closing_boundary = b'\r\n--' + orig_boundary.encode() + b'--'
+
+        closing_boundary = b'--' + orig_boundary.encode() + b'--'
         if content.endswith(closing_boundary):
-            content = content[: -len(closing_boundary)]
+            content = content[:-len(closing_boundary)]
+
 
         one_of_the_part = PartOfMulti(headers, name, content)
 
@@ -54,6 +55,4 @@ def parse_multipart(request):
         full_multiparts.append(one_of_the_part)
 
     return Multipart(orig_boundary, full_multiparts)
-
-
 
