@@ -34,7 +34,7 @@ def parse_multipart(request):
             header_key = line.split(":")[0].strip()
             header_value = line.split(":",1)[1]
             headers[header_key] = header_value.strip()
-            if header_key == "Content-Disposition":
+            if header_key == 'Content-Disposition':
                 name = header_value.split("name=")[1].split(";")[0].strip('"')
 
 
