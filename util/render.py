@@ -20,6 +20,12 @@ def render(request, handler):
         file_name = 'public/search-users.html'
     elif request.path == '/change-avatar':
         file_name = 'public/change-avatar.html'
+    elif request.path == '/videotube':
+        file_name = 'public/videotube.html'
+    elif request.path == '/videotube/upload':
+        file_name = 'public/upload.html'
+    elif request.path == '/videotube/videos':
+        file_name = 'public/view-video.html'
     else:
         handler.request.sendall(b"HTTP/1.1 404 Not Found\r\n\r\nPage not found")
         return

@@ -34,6 +34,10 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/settings", render, True)
         self.router.add_route("GET", "/search-users", render, True)
         self.router.add_route("GET", "/change-avatar", render, True)
+        self.router.add_route("GET", "/videotube", render, True)
+        self.router.add_route("GET", "/videotube/upload", render, True)
+        self.router.add_route("GET", "/videotube/videos", render, False)
+
 
 
         #####################The basic function of the chat#####################################
@@ -78,7 +82,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         print("--- end of data ---\n\n")
         request = Request(received_data)
 
-        if request.headers.get("Content-Length"):
+        if "Content-Length" in request.headers:
             length = int(request.headers["Content-Length"])
             print("Length in server:", length)
             while len(received_data) < length:
