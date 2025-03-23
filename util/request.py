@@ -10,13 +10,12 @@ class Request:
         self.headers = {}
         self.cookies = {}
 
-        strl = request.decode()
-        str1 = strl.split("\r\n\r\n")[0]
+        header_part, _, body_part = request.partition(b'\r\n\r\n')
+        str1 = header_part.decode()
 
         #set body as bytes
-        get_body = strl.split("\r\n\r\n")
-        if len(get_body) > 1 and get_body[1] != "":
-            self.body = get_body[1].encode()
+
+        self.body = body_part
 
         #headers
         lists = str1.split("\r\n")

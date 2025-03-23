@@ -108,7 +108,6 @@ def authcallback(request, handler):
 
 
 def handler_command(command, args, access_token):
-
         if command == "/repos":
             if len(args) != 1:
                 return None

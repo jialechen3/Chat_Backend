@@ -121,6 +121,10 @@ def chat_create(request, handler):
                 name = chat_collection.find_one({"author": user['username']})
                 if name:
                     update_nickname = name['nickname']
+
+                #check if there is an avatar image uploaded
+                image_url = user['imageURL']
+
                 chat_collection.insert_one({
                     "author": user['username'],
                     "id": message_id,
@@ -128,7 +132,7 @@ def chat_create(request, handler):
                     "updated": False,
                     "reactions": {},
                     "nickname": update_nickname,
-                    "imageURL": f"public/imgs/profile/avatar_{author}.svg"
+                    "imageURL": image_url
                 })
     ##########################################################################################
 
@@ -161,6 +165,7 @@ def chat_create(request, handler):
             auth_token = request.cookies['auth_token']
             hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
             user = user_collection.find_one({"auth_token": hashed_token})
+            image_url = user['imageURL']
             chat_collection.insert_one({
                 "author": user['username'],
                 "id": message_id,
@@ -168,7 +173,7 @@ def chat_create(request, handler):
                 "updated": False,
                 "reactions": {},
                 "nickname": "",
-                "imageURL": f"public/imgs/profile/avatar_{author}.svg"
+                "imageURL": image_url
             })
         ######################################################################
 

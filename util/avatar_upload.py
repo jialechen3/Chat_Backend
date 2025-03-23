@@ -8,10 +8,10 @@ from util.response import Response
 from util.multipart import parse_multipart
 
 
-def handle_avatar_upload(request, handler):
+def avatar_upload(request, handler):
     res = Response()
 
-    parsed = parse_multipart(request.body)
+    parsed = parse_multipart(request)
 
     ######################Find the uploaded file##########################
     avatar_part = None
@@ -30,9 +30,10 @@ def handle_avatar_upload(request, handler):
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
     avatar_id = str(uuid.uuid4())
-    mime_type = avatar_part.headers.get('Content-Type')
+    mime_type = avatar_part.headers['Content-Type']
 
-    _type = mime_type.get(mime_type.split('/')[1])
+    _type = mime_type.split('/')[1]
+
     filename = f"{avatar_id}.{_type}"
     filepath = os.path.join(img_dir, filename)
 
@@ -57,6 +58,7 @@ def handle_avatar_upload(request, handler):
         res.text("Invalid auth token")
         handler.request.sendall(res.to_data())
         return
+
     user_collection.update_one({'auth_token': hashed_token}, {'$set': {'imageURL': f"{img_dir}/{filename}"}})
 
     res.set_status(200, 'ok')

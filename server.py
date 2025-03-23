@@ -1,5 +1,6 @@
 import socketserver
 
+from util.avatar_upload import avatar_upload
 from util.github import authcallback,authgithub
 from util.totp import generateTwoFac
 from util.chat import chat_create
@@ -54,8 +55,8 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("POST", "/api/users/settings", update_profile, True)
         ################################Avatar upload##################################
         self.router.add_route("POST", "/api/users/settings", update_profile, True)
-        ####################Two factor authentication###############################
-        self.router.add_route("POST", "/api/users/avatar", generateTwoFac, True)
+        ####################Avatar upload###############################
+        self.router.add_route("POST", "/api/users/avatar", avatar_upload, True)
 
         ########################GITHUB Login#######################################
         self.router.add_route("GET", "/authgithub", authgithub, True)
@@ -77,6 +78,13 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         print("--- end of data ---\n\n")
         request = Request(received_data)
 
+        if request.headers.get("Content-Length"):
+            length = int(request.headers["Content-Length"])
+            print("Length in server:", length)
+            while len(received_data) < length:
+                chunk = self.request.recv(2048)
+                received_data += chunk
+        request = Request(received_data)
         self.router.route_request(request, self)
 
 
