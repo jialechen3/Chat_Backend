@@ -15,6 +15,7 @@ from util.render import render
 from util.request import Request
 from util.router import Router
 from util.hello_path import hello_path
+from util.tube_clone import video_upload, video_get_all, video_get_one
 from util.user_actions import register, logout, login, get_me, search_user, update_profile
 
 
@@ -65,6 +66,13 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         ########################GITHUB Login#######################################
         self.router.add_route("GET", "/authgithub", authgithub, True)
         self.router.add_route("GET", "/authcallback", authcallback, False)
+
+
+        ######################Youtube Clone#####################################
+        self.router.add_route("POST", "/api/videos", video_upload, True)
+        self.router.add_route("GET", "/api/videos", video_get_all, True)
+        self.router.add_route("GET", "/api/videos/", video_get_one, False)
+
 
 
 

@@ -61,7 +61,6 @@ def emoji_delete(request, handler):
             updated_reaction = updated_db['reactions']
             if not updated_reaction[emoji]:
                 chat_collection.update_one({'id': mes_id}, {'$unset': {f"reactions.{emoji}": ""}})
-    print("block the remove")
     if not user_found:
         res.set_status(403, 'forbid')
         res.text('you dont have any reaction with this message')

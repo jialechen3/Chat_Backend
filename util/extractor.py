@@ -11,7 +11,8 @@ MIME_TYPES = {
     "gif": "image/gif",
     "png": "image/png",
     "ico": "image/x-icon",
-    "svg": "image/svg+xml"
+    "svg": "image/svg+xml",
+    "mp4": "video/mp4"
 }
 def extractor(request, handler):
     res = Response()
