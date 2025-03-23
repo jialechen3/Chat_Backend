@@ -41,7 +41,7 @@ def parse_multipart(request):
         #the body content
         content = byte_heads[1]
         if content.endswith(b'\r\n'):
-            content = content[:-2]  # Remove the trailing '\r\n'
+            content = content[:-2]
 
         #check if the content has the closing boundary marker
         closing_boundary = b'\r\n--' + orig_boundary.encode() + b'--'
