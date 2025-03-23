@@ -76,10 +76,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         received_data = self.request.recv(4096)
-        print(self.client_address)
-        print("--- received data ---")
-        print(received_data)
-        print("--- end of data ---\n\n")
+
         request = Request(received_data)
 
         if "Content-Length" in request.headers:
@@ -88,6 +85,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
             while len(received_data) < length:
                 chunk = self.request.recv(4096)
                 received_data += chunk
+
             print("FINAL length in server:", len(received_data))
 
         request2 = Request(received_data)

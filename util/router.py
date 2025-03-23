@@ -23,7 +23,6 @@ class Router:
 
                 if (route['exact_path'] and path == route['path']) or (
                         not route['exact_path'] and path.startswith(route['path'])):
-                    print("Router test:", route['action'])
                     route['action'](request, handler)
                     return self
 

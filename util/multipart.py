@@ -9,8 +9,8 @@ def parse_multipart(request):
 
     content_type = request.headers['Content-Type']
     orig_boundary = content_type.strip().split('boundary=')[-1]
-    boundary = '--' + orig_boundary  + '\r\n'
-    boundary = boundary.encode()
+    boundary = '--' + orig_boundary
+    boundary = boundary.encode() + b'\r\n'
 
     #------WebKitFormBoundaryv1tp9x8MX628OUBX
     multi = req.split(boundary)
@@ -44,7 +44,7 @@ def parse_multipart(request):
             content = content[:-2]
 
 
-        closing_boundary = b'--' + orig_boundary.encode() + b'--'
+        closing_boundary = b'\r\n--' + orig_boundary.encode() + b'--'
         if content.endswith(closing_boundary):
             content = content[:-len(closing_boundary)]
 

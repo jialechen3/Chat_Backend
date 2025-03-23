@@ -62,8 +62,7 @@ def avatar_upload(request, handler):
         return
 
     user_collection.update_one({'auth_token': hashed_token}, {'$set': {'imageURL': f"{img_dir}/{filename}"}})
-    mime = {'Content-Type': mime_type}
-    res.headers(mime)
+
 
     res.set_status(200, 'ok')
     handler.request.sendall(res.to_data())
