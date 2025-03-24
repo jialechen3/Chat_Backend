@@ -26,6 +26,7 @@ class Router:
                     route['action'](request, handler)
                     return self
 
+
         #If there is no path matching the request, send a 404 Not Found response over the handler.
         res = Response()
         res.set_status(404, "Not Found")

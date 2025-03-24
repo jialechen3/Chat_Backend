@@ -37,8 +37,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/change-avatar", render, True)
         self.router.add_route("GET", "/videotube", render, True)
         self.router.add_route("GET", "/videotube/upload", render, True)
-        self.router.add_route("GET", "/videotube/videos", render, False)
-
+        self.router.add_route("GET", "/videotube/videos/", render, False)
 
 
         #####################The basic function of the chat#####################################

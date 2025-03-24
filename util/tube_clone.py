@@ -85,9 +85,10 @@ def video_get_all(request, handler):
     handler.request.sendall(res.to_data())
 
 def video_get_one(request, handler):
+
     res = Response()
     video_id = request.path.split("/")[3]
-    print("CHECK ID", video_id)
+
     video = video_collection.find_one({"id": video_id})
     video_data = {
         "author_id": video["author_id"],
