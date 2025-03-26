@@ -95,8 +95,7 @@ def video_get_one(request, handler):
         "title": video["title"],
         "description": video["description"],
         "video_path": video["video_path"],
-        "created_at": video["created_at"] if isinstance(video["created_at"], str) else video["created_at"].strftime(
-            '%Y-%m-%d %H:%M:%S'),
+        "created_at": video["created_at"],
         "id": video["id"]
     }
     res.json({'video': video_data})

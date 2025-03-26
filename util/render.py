@@ -26,6 +26,8 @@ def render(request, handler):
         file_name = 'public/upload.html'
     elif request.path.startswith('/videotube/videos/'):
         file_name = 'public/view-video.html'
+    ##elif request.path.startswith('/videotube/set-thumbnail'):
+        ##file_name = 'public/set-thumbnail.html'
     else:
         handler.request.sendall(b"HTTP/1.1 404 Not Found\r\n\r\nPage not found")
         return
