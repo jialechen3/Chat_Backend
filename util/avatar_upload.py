@@ -33,6 +33,7 @@ def avatar_upload(request, handler):
     mime_type = avatar_part.headers['Content-Type']
 
     _type = mime_type.split('/')[1]
+    print("TEST type:", _type)
     #if _type != 'jpeg' or 'jpg' or 'gif' or 'png':
         #res.set_status(400, 'bad request')
         #handler.request.sendall(res.to_data())
