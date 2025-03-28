@@ -3,3 +3,4 @@ bcrypt
 requests
 pyotp
 dotenv
+ffmpeg-python

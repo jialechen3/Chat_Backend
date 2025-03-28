@@ -17,6 +17,7 @@ from util.router import Router
 from util.hello_path import hello_path
 from util.tube_clone import video_upload, video_get_all, video_get_one
 from util.user_actions import register, logout, login, get_me, search_user, update_profile
+from util.youtube_api import _transcribe
 
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
@@ -72,6 +73,10 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/api/videos", video_get_all, True)
         self.router.add_route("GET", "/api/videos/", video_get_one, False)
 
+        #######################Generate subtitle#################################
+        self.router.add_route("GET", "/api/transcriptions/", _transcribe, False)
+
+
 
 
 
@@ -88,13 +93,13 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 
         if "Content-Length" in request.headers:
             length = int(request.headers['Content-Length'])
-            print("Length in server:", length)
+
             while len(request.body) < length:
                 chunk = self.request.recv(2048)
                 received_data += chunk
                 request = Request(received_data)
 
-            print("FINAL length in server:", len(received_data))
+
 
 
         self.router.route_request(request, self)

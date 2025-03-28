@@ -32,11 +32,7 @@ def authgithub(request, handler):
     url = url.rstrip("&")
     res.set_status(302, "Found")
     res.headers({"location": url})
-    #config = dotenv_values(".env")
 
-    #scope: repo
-    #params =
-    #requests.get("string", params=params)
     handler.request.sendall(res.to_data())
 
 
@@ -82,7 +78,7 @@ def authcallback(request, handler):
 
     user = response.json()
     username = user.get("login")
-    #email = user.get("email")
+
 
     userid = str(uuid.uuid4())
     if not user_collection.find_one({"username": username}):

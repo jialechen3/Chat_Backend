@@ -59,7 +59,8 @@ def video_upload(request, handler):
         "description": description.decode(),
         'video_path': f"{video_dir}/{filename}",
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        'id': video_id
+        'id': video_id,
+        'transcription_id': ''
     })
 
     data = {'id': video_id}

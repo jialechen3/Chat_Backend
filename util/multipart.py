@@ -1,5 +1,6 @@
 import unittest
 
+
 from util.parts_class import PartOfMulti, Multipart
 
 
@@ -55,4 +56,5 @@ def parse_multipart(request):
         full_multiparts.append(one_of_the_part)
 
     return Multipart(orig_boundary, full_multiparts)
+
 
