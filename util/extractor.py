@@ -6,7 +6,7 @@ MIME_TYPES = {
     "html": "text/html",
     "css": "text/css",
     "js": "text/javascript",
-    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
     "webp": "image/webp",
     "gif": "image/gif",
     "png": "image/png",
