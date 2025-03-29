@@ -39,7 +39,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/videotube", render, True)
         self.router.add_route("GET", "/videotube/upload", render, True)
         self.router.add_route("GET", "/videotube/videos/", render, False)
-        ##self.router.add_route("GET", "/videotube/set-thumbnail", render, False)
+        self.router.add_route("GET", "/videotube/set-thumbnail", render, False)
 
         #####################The basic function of the chat#####################################
         self.router.add_route("POST", "/api/chats", chat_create, True)
@@ -74,7 +74,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/api/videos/", video_get_one, False)
 
         #######################Generate subtitle#################################
-        self.router.add_route("GET", "/api/transcriptions/", _transcribe, False)
+        #self.router.add_route("GET", "/api/transcriptions/", _transcribe, False)
 
 
 
