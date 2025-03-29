@@ -21,20 +21,16 @@ def _transcribe(request, handler):
         handler.request.sendall(res.to_data())
 
     file_path = video["video_path"]
-    video_path = f"./{file_path}"
+    video_path = f"{file_path}"
     #####creating path for audio
-    audio_dir = "../public/audios"
+    audio_dir = "public/audios"
     if not os.path.exists(audio_dir):
         os.makedirs(audio_dir)
 
     #check for duration
     print("probe path:", video_path)
 
-    curpwd = os.getcwd()
-    print(curpwd)
 
-    file = open(video_path)
-    print(file)
 
     probe = ffmpeg.probe(video_path)
     print(probe['format']['duration'])
@@ -53,14 +49,18 @@ def _transcribe(request, handler):
         response1 = requests.post(API_URL, headers=headers, files=files)
 
     data = response1.json()
+    print(data)
     unique_id = data.get("unique_id")
     print("Transcription Request ID:", unique_id)
     response = requests.get(f"https://transcription-api.nico.engineer/transcriptions/{unique_id}", headers=headers)
+    print(response.json())
     if response.status_code != 200:
+        print("Transcription request failed")
         res.set_status(400, 'invalid token')
         handler.request.sendall(res.to_data())
         return
-    #there will e a s3 url in res and then make another get request
+
+    #there will be a s3 url in res and then make another get request
     video_collection.update_one({'id': video_id}, {'$set': {'transcription_id': unique_id}})
     res.set_status(200, 'ok')
     res.text('transcription success')
