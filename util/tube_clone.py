@@ -1,9 +1,11 @@
 import hashlib
+import json
 import os
 import uuid
 from datetime import datetime
 
 import ffmpeg
+import requests
 
 from util.database import user_collection, video_collection
 from util.multipart import parse_multipart
@@ -63,19 +65,49 @@ def video_upload(request, handler):
     ########make the thumbnail###########
     probe = ffmpeg.probe(filepath)
     ####make 5 different frame#########
-    timestamps = [0.25, 0.5, 0.75, 1]
+
     duration = float(probe['format']['duration'])
     path_array = []
     frame_id = str(uuid.uuid4())
     frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
-    ffmpeg.input(filepath, ss=0).output(frame_path, vframes= 1, format='image2').run()
+    thumbnail_path = frame_path
+    ffmpeg.input(filepath, ss=0).output(frame_path, vframes= 1, format='image2', update=1).run()
     path_array.append(frame_path)
-#    for timestamp in timestamps:
- #       print(f"timestamp: {timestamp}")
- #       frame_id = str(uuid.uuid4())
-  #      frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
-#        ffmpeg.input(filepath, ss=(duration * timestamp)).output(frame_path, vframes=1).run()
-    #    path_array.append(frame_path)
+
+    ###2
+    frame_id = str(uuid.uuid4())
+    frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
+    ffmpeg.input(filepath, ss=(duration * 0.25)) \
+        .output(frame_path, vframes=1, format='image2', update=1) \
+        .run(overwrite_output=False)
+    path_array.append(frame_path)
+
+    ###3
+    frame_id = str(uuid.uuid4())
+    frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
+    ffmpeg.input(filepath, ss=(duration * 0.5)) \
+        .output(frame_path, vframes=1, format='image2', update=1) \
+        .run(overwrite_output=False)
+    path_array.append(frame_path)
+
+    ###4
+    frame_id = str(uuid.uuid4())
+    frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
+    ffmpeg.input(filepath, ss=(duration * 0.75)) \
+        .output(frame_path, vframes=1, format='image2', update=1) \
+        .run(overwrite_output=False)
+    path_array.append(frame_path)
+
+    ###5
+    frame_id = str(uuid.uuid4())
+    frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
+
+    ffmpeg.input(filepath, ss=duration-1).output(frame_path, vframes=1, update=1).run(overwrite_output=True)
+    path_array.append(frame_path)
+
+    #####hls####
+    hls_path = ''
+    #hls_path = set_resolution(video_id)
 
     video_collection.insert_one({
         "author_id": user['userid'],
@@ -85,9 +117,17 @@ def video_upload(request, handler):
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'id': video_id,
         'transcription_id': '',
-        'thumbnails': [],
-        'thumbnailURL': ''
+        'thumbnails': path_array,
+        'thumbnailURL': thumbnail_path,
+        'hls_path': hls_path
     })
+
+    ###########Make the transcription############
+    if not _transcribe(video_id):
+        res.set_status(400, "invalid video")
+        res.text("invalid video duration")
+        handler.request.sendall(res.to_data())
+        return
 
 
 
@@ -107,7 +147,11 @@ def video_get_all(request, handler):
             "description": video["description"],
             "video_path": video["video_path"],
             "created_at": video["created_at"],
-            "id": video["id"]
+            "id": video["id"],
+            'transcription_id': video["transcription_id"],
+            'thumbnails': video["thumbnails"],
+            'thumbnailURL': video["thumbnailURL"],
+            'hls_path': video["hls_path"]
         })
     res.json({'videos': video_list})
     res.set_status(200, 'ok')
@@ -125,7 +169,11 @@ def video_get_one(request, handler):
         "description": video["description"],
         "video_path": video["video_path"],
         "created_at": video["created_at"],
-        "id": video["id"]
+        "id": video["id"],
+        'transcription_id': video["transcription_id"],
+        'thumbnails': video["thumbnails"],
+        'thumbnailURL': video["thumbnailURL"],
+        'hls_path': video["hls_path"]
     }
     res.json({'video': video_data})
     res.set_status(200, 'ok')
@@ -133,3 +181,112 @@ def video_get_one(request, handler):
     handler.request.sendall(res.to_data())
 
 
+
+
+
+
+
+
+
+
+##########Question to ask: why file not found? What is to be send after getting the vtt file, the data of the response?
+def _transcribe(id):
+
+    res = Response()
+    #api url: https://transcription-api.nico.engineer/
+    redirect_ult = "https://github.com/login/oauth/access_token"
+    API_TOKEN = os.environ.get("YOUTUBE_CLONE_API")
+    API_URL = "https://transcription-api.nico.engineer/transcribe"
+    video_id = id
+    video = video_collection.find_one({"id": video_id})
+    if not video:
+        return False
+
+    file_path = video["video_path"]
+    video_path = f"{file_path}"
+    #####creating path for audio
+    audio_dir = "public/audios"
+    if not os.path.exists(audio_dir):
+        os.makedirs(audio_dir)
+
+    #check for duration
+
+
+
+    probe = ffmpeg.probe(video_path)
+    duration = float(probe['format']['duration'])
+    if duration > 60:
+        return False
+    output_path = f"{audio_dir}/{video_id}.mp3"
+    video = ffmpeg.input(video_path)
+    video = ffmpeg.output(video, output_path, format='mp3')
+    ffmpeg.run(video)
+    headers = {"Authorization": f"Bearer {API_TOKEN}"}
+    file = open(output_path, "rb")  # Open the file in binary read mode
+    files = {"file": file}
+
+    response1 = requests.post(API_URL, headers=headers, files=files)
+
+    data = response1.json()
+
+    unique_id = data.get("unique_id")
+    video_collection.update_one({'id': video_id}, {'$set': {'transcription_id': unique_id}})
+
+
+    return True
+
+
+
+
+
+
+def endpoint_transcription(request, handler):
+    res = Response()
+    API_TOKEN = os.environ.get("YOUTUBE_CLONE_API")
+    myid = request.path.split("/")[3]
+    video = video_collection.find_one({'id': myid})
+    transcription_id = video["transcription_id"]
+    header = {'Authorization': f'Bearer {API_TOKEN}'}
+    response = requests.get(f"https://transcription-api.nico.engineer/transcriptions/{transcription_id}", headers=header)
+
+    if response.status_code != 200:
+        res.set_status(400, 'transcription not exist')
+        handler.request.sendall(res.to_data())
+        return
+
+    response = requests.get(response.json().get("s3_url"))
+    res.bytes(response.content)
+
+
+    res.set_status(200, 'success')
+    handler.request.sendall(res.to_data())
+
+
+
+def set_thumbnail(request, handler):
+    res = Response()
+    print('in the function')
+    video_id = request.path.split("/")[3]
+    body = request.body.decode()
+    url = json.loads(body).get("thumbnailURL")
+
+    print(url)
+    video_collection.update_one({'id': video_id}, {'$set': {'thumbnailURL': url}})
+    res.json({'message': 'change thumbnail success'})
+    handler.request.sendall(res.to_data())
+
+def set_resolution(video_id):
+    hls_path = 'public/hls'
+    print('doing resolution')
+    if not os.path.exists(hls_path):
+        os.makedirs(hls_path)
+    ffmpeg.input(f"public/videos/{video_id}.mp4").output(
+        f"{hls_path}/{video_id}in.m3u8",
+        format="hls",  # Output format as HLS
+        hls_list_size=0,  # Unlimited playlist size
+        hls_segment_filename=f"{hls_path}/segment_%03d.ts",  # Output segment files
+        map="0:v:0",  # Use the first video stream
+        s="1920x1080",  # First resolution (HD)
+        b_v="2500k"  # Bitrate for the first resolution
+    ).run(overwrite_output=True)
+    return f"{video_id}in.m3u8"

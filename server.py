@@ -15,9 +15,8 @@ from util.render import render
 from util.request import Request
 from util.router import Router
 from util.hello_path import hello_path
-from util.tube_clone import video_upload, video_get_all, video_get_one
+from util.tube_clone import video_upload, video_get_all, video_get_one, endpoint_transcription, set_thumbnail
 from util.user_actions import register, logout, login, get_me, search_user, update_profile
-from util.youtube_api import _transcribe
 
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
@@ -72,9 +71,10 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("POST", "/api/videos", video_upload, True)
         self.router.add_route("GET", "/api/videos", video_get_all, True)
         self.router.add_route("GET", "/api/videos/", video_get_one, False)
+        self.router.add_route("PUT", "/api/thumbnails/", set_thumbnail, False)
 
         #######################Generate subtitle#################################
-        self.router.add_route("GET", "/api/transcriptions/", _transcribe, False)
+        self.router.add_route("GET", "/api/transcriptions/", endpoint_transcription, False)
 
 
 

@@ -23,7 +23,8 @@ class Request:
         self.method = str0[0]
 
         self.path = str0[1]
-
+        if not str0[1]:
+            print(str0)
         self.http_version = "HTTP/1.1"
 
         #iterate through all the headers
