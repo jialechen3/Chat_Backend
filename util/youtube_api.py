@@ -39,20 +39,24 @@ def _transcribe(request, handler):
     print('output:',output_path)
     video = ffmpeg.input(video_path)
     video = ffmpeg.output(video, output_path, format='mp3')
-    ffmpeg.run(video, capture_stderr=True, capture_stdout=True, overwrite_output=True)
+    ffmpeg.run(video)
 
 
     headers = {"Authorization": f"Bearer {API_TOKEN}"}
 
-    with open(output_path, "rb") as f:
-        files = {"file": ("audio.mp3", f, "audio/mpeg")}
-        response1 = requests.post(API_URL, headers=headers, files=files)
+    file = open(output_path, "rb")  # Open the file in binary read mode
+    files = {"file": file}
+
+    print(files)
+    response1 = requests.post(API_URL, headers=headers, files=files)
 
     data = response1.json()
     print(data)
+    print(response1.status_code)
     unique_id = data.get("unique_id")
     print("Transcription Request ID:", unique_id)
     response = requests.get(f"https://transcription-api.nico.engineer/transcriptions/{unique_id}", headers=headers)
+    print(response.status_code)
     print(response.json())
     if response.status_code != 200:
         print("Transcription request failed")

@@ -68,15 +68,14 @@ def video_upload(request, handler):
     path_array = []
     frame_id = str(uuid.uuid4())
     frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
-    thumbnail_dir = os.path.abspath("public/imgs/thumbnails")
-    ffmpeg.input(filepath, ss=0).output(frame_path, vframes=1).run()
+    ffmpeg.input(filepath, ss=0).output(frame_path, vframes= 1, format='image2').run()
     path_array.append(frame_path)
-    for timestamp in timestamps:
-        print(f"timestamp: {timestamp}")
-        frame_id = str(uuid.uuid4())
-        frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
-        ffmpeg.input(filepath, ss=(duration * timestamp)).output(frame_path, vframes=1).run()
-        path_array.append(frame_path)
+#    for timestamp in timestamps:
+ #       print(f"timestamp: {timestamp}")
+ #       frame_id = str(uuid.uuid4())
+  #      frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
+#        ffmpeg.input(filepath, ss=(duration * timestamp)).output(frame_path, vframes=1).run()
+    #    path_array.append(frame_path)
 
     video_collection.insert_one({
         "author_id": user['userid'],
@@ -86,8 +85,8 @@ def video_upload(request, handler):
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'id': video_id,
         'transcription_id': '',
-        'thumbnails': path_array,
-        'thumbnailURL': frame_path
+        'thumbnails': [],
+        'thumbnailURL': ''
     })
 
 

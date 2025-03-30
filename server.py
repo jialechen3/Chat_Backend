@@ -74,7 +74,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/api/videos/", video_get_one, False)
 
         #######################Generate subtitle#################################
-        #self.router.add_route("GET", "/api/transcriptions/", _transcribe, False)
+        self.router.add_route("GET", "/api/transcriptions/", _transcribe, False)
 
 
 
