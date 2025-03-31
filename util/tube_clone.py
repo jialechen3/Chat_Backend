@@ -64,61 +64,19 @@ def video_upload(request, handler):
 
     ########make the thumbnail###########
     probe = ffmpeg.probe(filepath)
-    ####make 5 different frame#########
 
-    duration = float(probe['format']['duration'])
-    path_array = []
-    frame_id = str(uuid.uuid4())
-    frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
-    thumbnail_path = frame_path
-    ffmpeg.input(filepath, ss=0).output(frame_path, vframes= 1, format='image2', update=1).run()
-    path_array.append(frame_path)
-
-    ###2
-    frame_id = str(uuid.uuid4())
-    frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
-    ffmpeg.input(filepath, ss=(duration * 0.25)) \
-        .output(frame_path, vframes=1, format='image2', update=1) \
-        .run(overwrite_output=False)
-    path_array.append(frame_path)
-
-    ###3
-    frame_id = str(uuid.uuid4())
-    frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
-    ffmpeg.input(filepath, ss=(duration * 0.5)) \
-        .output(frame_path, vframes=1, format='image2', update=1) \
-        .run(overwrite_output=False)
-    path_array.append(frame_path)
-
-    ###4
-    frame_id = str(uuid.uuid4())
-    frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
-    ffmpeg.input(filepath, ss=(duration * 0.75)) \
-        .output(frame_path, vframes=1, format='image2', update=1) \
-        .run(overwrite_output=False)
-    path_array.append(frame_path)
-
-    ###5
-    frame_id = str(uuid.uuid4())
-    frame_path = f"public/imgs/thumbnails/{frame_id}.jpg"
-
-    ffmpeg.input(filepath, ss=duration-1).output(frame_path, vframes=1, update=1).run(overwrite_output=True)
-    path_array.append(frame_path)
-
-    #####hls####
-    hls_path = ''
-    #hls_path = set_resolution(video_id)
+    frames, thumbnail = extract_frames(filepath)
 
     video_collection.insert_one({
         "author_id": user['userid'],
         "title": title.decode(),
         "description": description.decode(),
-        'video_path': f"{video_dir}/{filename}",
+        'video_path': filepath,
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'id': video_id,
         'transcription_id': '',
-        'thumbnails': path_array,
-        'thumbnailURL': thumbnail_path
+        'thumbnails': frames,
+        'thumbnailURL': thumbnail
     })
 
     ###########Make the transcription############
@@ -259,6 +217,33 @@ def endpoint_transcription(request, handler):
     handler.request.sendall(res.to_data())
 
 
+def extract_frames(filepath, num_frames=5, output_dir="public/imgs/thumbnails"):
+    thumbnail_path = ''
+    # Get video duration
+    probe = ffmpeg.probe(filepath)
+    duration = float(probe['format']['duration'])
+
+    # Calculate frame positions (0%, 25%, 50%, 75%, 100%)
+    positions = [0, duration * 0.25, duration * 0.5, duration * 0.75, max(0.0, (duration - 1.0))]
+
+    path_array = []
+    for i, pos in enumerate(positions):
+        frame_id = str(uuid.uuid4())
+        frame_path = f"{output_dir}/{frame_id}.jpg"
+
+        # Extract frame
+        (
+            ffmpeg.input(filepath, ss=pos)
+            .output(frame_path, vframes=1, update=1)
+            .run(overwrite_output=True)
+        )
+        path_array.append(frame_path)
+
+        # First frame becomes thumbnail
+        if i == 0:
+            thumbnail_path = frame_path
+
+    return path_array, thumbnail_path
 
 def set_thumbnail(request, handler):
     res = Response()
@@ -272,18 +257,4 @@ def set_thumbnail(request, handler):
     res.json({'message': 'change thumbnail success'})
     handler.request.sendall(res.to_data())
 
-def set_resolution(video_id):
-    hls_path = 'public/hls'
-    print('doing resolution')
-    if not os.path.exists(hls_path):
-        os.makedirs(hls_path)
-    ffmpeg.input(f"public/videos/{video_id}.mp4").output(
-        f"{hls_path}/{video_id}in.m3u8",
-        format="hls",  # Output format as HLS
-        hls_list_size=0,  # Unlimited playlist size
-        hls_segment_filename=f"{hls_path}/segment_%03d.ts",  # Output segment files
-        map="0:v:0",  # Use the first video stream
-        s="1920x1080",  # First resolution (HD)
-        b_v="2500k"  # Bitrate for the first resolution
-    ).run(overwrite_output=True)
-    return f"{video_id}in.m3u8"
+
