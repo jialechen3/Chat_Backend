@@ -118,8 +118,7 @@ def video_upload(request, handler):
         'id': video_id,
         'transcription_id': '',
         'thumbnails': path_array,
-        'thumbnailURL': thumbnail_path,
-        'hls_path': hls_path
+        'thumbnailURL': thumbnail_path
     })
 
     ###########Make the transcription############
@@ -150,8 +149,7 @@ def video_get_all(request, handler):
             "id": video["id"],
             'transcription_id': video["transcription_id"],
             'thumbnails': video["thumbnails"],
-            'thumbnailURL': video["thumbnailURL"],
-            'hls_path': video["hls_path"]
+            'thumbnailURL': video["thumbnailURL"]
         })
     res.json({'videos': video_list})
     res.set_status(200, 'ok')
@@ -172,8 +170,7 @@ def video_get_one(request, handler):
         "id": video["id"],
         'transcription_id': video["transcription_id"],
         'thumbnails': video["thumbnails"],
-        'thumbnailURL': video["thumbnailURL"],
-        'hls_path': video["hls_path"]
+        'thumbnailURL': video["thumbnailURL"]
     }
     res.json({'video': video_data})
     res.set_status(200, 'ok')
