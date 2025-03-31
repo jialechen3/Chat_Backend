@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import uuid
+from cgitb import handler
 from datetime import datetime
 
 import ffmpeg
@@ -80,11 +81,11 @@ def video_upload(request, handler):
     })
 
     ###########Make the transcription############
-    if not _transcribe(video_id):
-        res.set_status(400, "invalid video")
-        res.text("invalid video duration")
-        handler.request.sendall(res.to_data())
-        return
+    duration = float(probe['format']['duration'])
+
+    if duration <= 60:
+        _transcribe(video_id)
+
 
 
 
@@ -173,6 +174,13 @@ def _transcribe(id):
     if duration > 60:
         return False
     output_path = f"{audio_dir}/{video_id}.mp3"
+
+    audio_streams = [stream for stream in probe["streams"] if stream["codec_type"] == "audio"]
+
+    if not audio_streams:
+        print("no audio streams")
+        return False
+
     video = ffmpeg.input(video_path)
     video = ffmpeg.output(video, output_path, format='mp3')
     ffmpeg.run(video)
