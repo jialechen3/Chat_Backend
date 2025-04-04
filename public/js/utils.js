@@ -4,3 +4,5 @@ export function html(strings, ...values) {
         return result + str + value;
     }, "");
 }
+
+export const websocketUrl = `ws${window.location.protocol === "https:" ? "s" : ""}://${window.location.host}/websocket`

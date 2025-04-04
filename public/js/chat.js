@@ -29,17 +29,15 @@ async function fetchMessages() {
             <p>
               <div class="cursor-pointer message-content" id="${message.id}">
                 <span class="italic font-black group">
-                  <span class="group-hover:hidden">${
-                    message.nickname ? message.nickname : message.author
-                  }</span>
+                  <span class="group-hover:hidden">${message.nickname ? message.nickname : message.author
+      }</span>
                   ${`<span class="hidden group-hover:inline font-light">${message.author}</span>`} :
                 </span>
                 <span 
                   >${message.content}</span
                 >
-                <span class="text-xs">${
-                  message.updated ? "(edited)" : ""
-                } </span>
+                <span class="text-xs">${message.updated ? "(edited)" : ""
+      } </span>
               </div>
               <button
                 class="absolute top-0 -right-6 p-1 hover:bg-gray-200/50 rounded-full"
@@ -66,20 +64,19 @@ async function fetchMessages() {
               <!-- This is emoji div, converts map to array, loops through adds badge for each emoji-->
               <div class="flex flex-wrap gap-1 mt-1">
                 ${Object.entries(message.reactions || {})
-                  .map(
-                    ([emoji, users]) => `
+        .map(
+          ([emoji, users]) => `
                   <button onclick="removeReaction(
                     '${message.id}'
                   , '${emoji}')" class="px-2 py-0.5 rounded-full text-sm bg-gray-600">
-                    ${
-                      users.length > 1
-                        ? `<span class="mr-1">${users.length}</span>`
-                        : ""
-                    }${emoji}
+                    ${users.length > 1
+              ? `<span class="mr-1">${users.length}</span>`
+              : ""
+            }${emoji}
                   </button>
                 `
-                  )
-                  .join("")}
+        )
+        .join("")}
               </div>
             </p>
           </div>

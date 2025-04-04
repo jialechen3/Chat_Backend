@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<div class="flex flex-col gap-6 w-full max-w-4xl mx-auto">
+  <div class="flex flex-col gap-4 p-6 bg-gray-800 rounded-xl">
+    <h1 class="text-2xl font-bold">Video Calling</h1>
+
+    <div class="flex flex-col gap-2">
+      <label for="meetingName" class="text-sm font-medium">Meeting Name:</label>
+      <input
+        type="text"
+        id="meetingName"
+        class="w-full p-2 bg-gray-700 rounded-lg text-white"
+        placeholder="Enter meeting name..."
+      />
+    </div>
+
+    <button
+      id="createMeetingBtn"
+      class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+      onclick="createMeeting()"
+    >
+      Create Meeting
+    </button>
+
+    <div class="mt-6">
+      <h2 class="text-xl font-bold mb-4">Active Calls</h2>
+      <div id="callsList" class="flex flex-col gap-2"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { websocketUrl } from "/public/js/utils.js";
+
+  let ws = null;
+
+  async function initWebSocket() {
+    try {
+      const response = await fetch("/api/users/@me");
+      if (!response.ok) {
+        alertManager.newAlert(
+          "Please log in to use video calls",
+          "error",
+          5000
+        );
+        window.location.href = "/login";
+        return;
+      }
+
+      ws = new WebSocket(websocketUrl);
+
+      ws.onopen = () => {
+        console.log("Connected to WebSocket");
+        ws.send(JSON.stringify({ messageType: "get_calls" }));
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleWebSocketMessage(data);
+      };
+
+      ws.onclose = () => {
+        alertManager.newAlert("Lost connection", "warning", 3000);
+      };
+    } catch (error) {
+      console.error("Error initializing WebSocket:", error);
+      alertManager.newAlert("Failed to connect", "error", 5000);
+    }
+  }
+
+  function handleWebSocketMessage(data) {
+    switch (data.messageType) {
+      case "call_list":
+        updateCallsList(data.calls);
+        break;
+      case "error":
+        alertManager.newAlert(data.error, "error", 5000);
+        break;
+    }
+  }
+
+  function updateCallsList(calls) {
+    const callsList = document.getElementById("callsList");
+    callsList.innerHTML = "";
+
+    if (calls.length === 0) {
+      callsList.innerHTML = '<div class="text-gray-400">No active calls</div>';
+      return;
+    }
+
+    calls.forEach((call) => {
+      const callDiv = document.createElement("div");
+      callDiv.className =
+        "flex justify-between items-center p-4 bg-gray-700 rounded-lg";
+
+      const nameDiv = document.createElement("div");
+      nameDiv.textContent = call.name;
+      callDiv.appendChild(nameDiv);
+
+      const joinButton = document.createElement("button");
+      joinButton.className =
+        "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors";
+      joinButton.textContent = "Join";
+      joinButton.onclick = () =>
+        (window.location.href = `/video-call/${call.id}`);
+      callDiv.appendChild(joinButton);
+
+      callsList.appendChild(callDiv);
+    });
+  }
+
+  async function createMeeting() {
+    const meetingName = document.getElementById("meetingName").value.trim();
+    if (!meetingName) {
+      alertManager.newAlert("Please enter a meeting name", "warning", 3000);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/video-calls", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: meetingName }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create meeting");
+      }
+
+      const data = await response.json();
+      window.location.href = `/video-call/${data.id}`;
+    } catch (error) {
+      alertManager.newAlert("Failed to create meeting", "error", 5000);
+    }
+  }
+
+  initWebSocket();
+
+  window.createMeeting = createMeeting;
+</script>

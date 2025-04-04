@@ -1,0 +1,226 @@
+<!-- Drawing Board Container -->
+<div class="flex flex-col gap-6 w-full max-w-4xl mx-auto">
+  <div class="flex flex-col items-center gap-4 p-6 bg-gray-800 rounded-xl">
+    <!-- Canvas Container -->
+    <canvas
+      id="drawingCanvas"
+      width="720"
+      height="400"
+      class="bg-white rounded-lg cursor-crosshair"
+    ></canvas>
+
+    <!-- Color Controls -->
+    <div class="flex items-center gap-4">
+      <!-- Color Picker -->
+      <input
+        type="color"
+        id="colorPicker"
+        class="w-12 h-12 rounded cursor-pointer"
+        value="#000000"
+      />
+
+      <!-- Quick Color Buttons -->
+      <div class="flex gap-2">
+        <button
+          onclick="setColor('#000000')"
+          class="w-8 h-8 bg-black rounded-full border-2 border-gray-300"
+        ></button>
+        <button
+          onclick="setColor('#FF0000')"
+          class="w-8 h-8 bg-red-500 rounded-full border-2 border-gray-300"
+        ></button>
+        <button
+          onclick="setColor('#00FF00')"
+          class="w-8 h-8 bg-green-500 rounded-full border-2 border-gray-300"
+        ></button>
+        <button
+          onclick="setColor('#0000FF')"
+          class="w-8 h-8 bg-blue-500 rounded-full border-2 border-gray-300"
+        ></button>
+        <button
+          onclick="setColor('#FFFF00')"
+          class="w-8 h-8 bg-yellow-500 rounded-full border-2 border-gray-300"
+        ></button>
+        <button
+          onclick="setColor('#FF00FF')"
+          class="w-8 h-8 bg-pink-500 rounded-full border-2 border-gray-300"
+        ></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User List -->
+  <div class="p-4 bg-gray-800 rounded-xl">
+    <h3 class="text-lg font-semibold mb-3">Connected Users</h3>
+    <ul id="userList" class="flex flex-wrap gap-2">
+      <!-- Users will be added here dynamically -->
+    </ul>
+  </div>
+</div>
+
+<script type="module">
+  import { websocketUrl } from "/public/js/utils.js";
+
+  let ws = null;
+  let isDrawing = false;
+  let currentColor = "#000000";
+  const canvas = document.getElementById("drawingCanvas");
+  const ctx = canvas.getContext("2d");
+  const colorPicker = document.getElementById("colorPicker");
+  const userList = document.getElementById("userList");
+
+  function updateUserList(users) {
+    userList.innerHTML = users
+      .map(
+        (user) =>
+          `<li class="px-2 py-1 bg-gray-700 rounded">${user.username}</li>`
+      )
+      .join("");
+  }
+
+  // Initialize WebSocket connection
+  async function initWebSocket() {
+    try {
+      // First check if we're authenticated
+      const response = await fetch("/api/users/@me");
+      if (!response.ok) {
+        alertManager.newAlert(
+          "Please log in to use the drawing board",
+          "error",
+          5000
+        );
+        window.location.href = "/login";
+        return;
+      }
+
+      // If authenticated, proceed with WebSocket connection
+      ws = new WebSocket(websocketUrl);
+
+      ws.onopen = () => {
+        console.log("Connected to WebSocket");
+        alertManager.newAlert("Connected to drawing board", "success", 3000);
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.messageType === "drawing") {
+          drawLine(data.startX, data.startY, data.endX, data.endY, data.color);
+        } else if (data.messageType === "init_strokes") {
+          // Draw all existing strokes
+          data.strokes.forEach((stroke) => {
+            drawLine(
+              stroke.startX,
+              stroke.startY,
+              stroke.endX,
+              stroke.endY,
+              stroke.color
+            );
+          });
+        } else if (data.messageType === "active_users_list") {
+          updateUserList(data.users);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log("WebSocket connection closed");
+        alertManager.newAlert(
+          "Lost connection to drawing board. Please refresh the page to reconnect.",
+          "warning",
+          3000
+        );
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        alertManager.newAlert(
+          "Failed to connect to drawing board",
+          "error",
+          5000
+        );
+      };
+    } catch (error) {
+      console.error("Connection error:", error);
+      alertManager.newAlert(
+        "Failed to connect to drawing board",
+        "error",
+        5000
+      );
+    }
+  }
+
+  // Initialize drawing context
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 2;
+
+  // Drawing functions
+  function startDrawing(e) {
+    isDrawing = true;
+    draw(e);
+  }
+
+  function stopDrawing() {
+    isDrawing = false;
+    ctx.beginPath();
+  }
+
+  function draw(e) {
+    if (!isDrawing) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    drawLine(ctx.lastX || x, ctx.lastY || y, x, y, currentColor);
+
+    // Send drawing data through WebSocket
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify({
+          messageType: "drawing",
+          startX: ctx.lastX || x,
+          startY: ctx.lastY || y,
+          endX: x,
+          endY: y,
+          color: currentColor,
+        })
+      );
+    }
+
+    ctx.lastX = x;
+    ctx.lastY = y;
+  }
+
+  function drawLine(startX, startY, endX, endY, color) {
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  }
+
+  function setColor(color) {
+    currentColor = color;
+    colorPicker.value = color;
+  }
+
+  // Event listeners
+  canvas.addEventListener("mousedown", startDrawing);
+  canvas.addEventListener("mousemove", draw);
+  canvas.addEventListener("mouseup", stopDrawing);
+  canvas.addEventListener("mouseout", stopDrawing);
+
+  colorPicker.addEventListener("input", (e) => {
+    currentColor = e.target.value;
+  });
+
+  // Initialize WebSocket connection
+  initWebSocket();
+
+  window.initWebSocket = initWebSocket;
+  window.drawLine = drawLine;
+  window.setColor = setColor;
+  window.startDrawing = startDrawing;
+  window.stopDrawing = stopDrawing;
+  window.draw = draw;
+</script>
