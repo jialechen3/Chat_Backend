@@ -1,5 +1,6 @@
 import socketserver
 
+from util import websocket
 from util.user_actions import avatar_upload
 from util.github import authcallback,authgithub
 from util.user_actions import generateTwoFac
@@ -83,6 +84,8 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         #######################Generate subtitle#################################
         self.router.add_route("GET", "/api/transcriptions/", endpoint_transcription, False)
 
+        #######################Route websocket#################################
+        #self.router.add_route("GET", "/websocket", websocket, True)
 
 
 
