@@ -21,12 +21,9 @@ class WebFrame:
 
 def parse_ws_frame(socketframe_bytes):
     #fin bit
-    #is the bit count from left to right or right to left
-    # ex. | FIN | RSV1 | RSV2 | RSV3 |  OPCODE  |
-    #     |  1  |  0   |  0   |  0   |  0001    |
     fin_bit = (socketframe_bytes[0] >> 7) & 1
 
-    opcode = socketframe_bytes & 0x0F
+    opcode = socketframe_bytes[0] & 0x0F
     mask_bit = (socketframe_bytes[1] >> 7) & 1
     #check length is <126
     #01111111
@@ -91,10 +88,10 @@ def generate_ws_frame(payload):
         frame_header.append(payload_length)
     elif payload_length >= 126 & payload_length<=0xFFFF:
         frame_header.append(126)
-        frame_header.extend(payload_length.to_bytes(2))
+        frame_header.extend(payload_length.to_bytes(2,'big'))
     else:
         frame_header.append(127)
-        frame_header.extend(payload_length.to_bytes(8))
+        frame_header.extend(payload_length.to_bytes(8, "big"))
 
     frame_header.extend(payload)
 
