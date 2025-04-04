@@ -1,20 +1,19 @@
 import socketserver
 
-from util.avatar_upload import avatar_upload
+from util.user_actions import avatar_upload
 from util.github import authcallback,authgithub
-from util.totp import generateTwoFac
+from util.user_actions import generateTwoFac
 from util.chat import chat_create
 from util.chat import chat_get
 from util.chat import chat_delete
 from util.chat import chat_update
-from util.emoji import emoji_create
-from util.emoji import emoji_delete
+from util.user_actions import emoji_create
+from util.user_actions import emoji_delete
 from util.extractor import extractor
-from util.nickname import nickname
+from util.user_actions import nickname
 from util.render import render
 from util.request import Request
 from util.router import Router
-from util.hello_path import hello_path
 from util.tube_clone import video_upload, video_get_all, video_get_one, endpoint_transcription, set_thumbnail
 from util.user_actions import register, logout, login, get_me, search_user, update_profile
 
@@ -23,7 +22,6 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 
     def __init__(self, request, client_address, server):
         self.router = Router()
-        self.router.add_route("GET", "/hello", hello_path, True)
         # TODO: Add your routes here
 
         ########This is where all the rendering goes#########################################
@@ -39,6 +37,15 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/videotube/upload", render, True)
         self.router.add_route("GET", "/videotube/videos/", render, False)
         self.router.add_route("GET", "/videotube/set-thumbnail", render, False)
+        self.router.add_route("GET", "/test-websocket", render, True)
+        self.router.add_route("GET", "/drawing-board", render, True)
+        self.router.add_route("GET", "/direct-messaging", render, True)
+        self.router.add_route("GET", "/video-call", render, True)
+        self.router.add_route("GET", "/video-call/", render, False)
+
+
+
+
 
         #####################The basic function of the chat#####################################
         self.router.add_route("POST", "/api/chats", chat_create, True)

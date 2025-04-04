@@ -28,6 +28,16 @@ def render(request, handler):
         file_name = 'public/view-video.html'
     elif request.path.startswith('/videotube/set-thumbnail'):
         file_name = 'public/set-thumbnail.html'
+    elif request.path.startswith('/test-websocket'):
+        file_name = 'public/test-websocket.html'
+    elif request.path.startswith('/drawing-board'):
+        file_name = 'public/drawing-board.html'
+    elif request.path.startswith('/direct-messaging'):
+        file_name = 'public/direct-messaging.html'
+    elif request.path.startswith('/video-call'):
+        file_name = 'public/video-call.html'
+    elif request.path.startswith('/video-call/'):
+        file_name = 'public/video-call-room.html'
     else:
         handler.request.sendall(b"HTTP/1.1 404 Not Found\r\n\r\nPage not found")
         return
