@@ -43,7 +43,7 @@ def parse_ws_frame(socketframe_bytes):
             masking_key = socketframe_bytes[index:index + 4]
             index += 4
         payloads = socketframe_bytes[index:index + payload_length]
-    elif payload_length == 127:
+    else:
         payload_length = int.from_bytes(socketframe_bytes[index:index + 8], byteorder='big')
         index += 8
 
@@ -75,9 +75,9 @@ def generate_ws_frame(payload):
     frame_header.append(FIN | RSV1 | RSV2 | RSV3 | OPCODE)
     if payload_length < 126:
         frame_header.append(payload_length)
-    elif payload_length<=0xFFFF:
+    elif payload_length<0xFFFF:
         frame_header.append(126)
-        frame_header.extend(payload_length.to_bytes(3,'big'))
+        frame_header.extend(payload_length.to_bytes(2,'big'))
     else:
         frame_header.append(127)
         frame_header.extend(payload_length.to_bytes(8, "big"))
