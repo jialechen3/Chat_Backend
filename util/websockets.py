@@ -80,8 +80,13 @@ def generate_ws_frame(payload):
     payload_length = len(payload)
     frame_header = bytearray()
 
-    frame_header.append((fin_bit << 7) | (0 << 4) | (0 << 3) | (0 << 2) | opcode)
+    FIN = fin_bit << 7
+    RSV1 = 0 << 6
+    RSV2 = 0 << 5
+    RSV3 = 0 << 4
+    OPCODE = opcode
 
+    frame_header.append(FIN | RSV1 | RSV2 | RSV3 | OPCODE)
     if payload_length < 126:
         frame_header.append(payload_length)
     elif payload_length >= 126 & payload_length<=0xFFFF:
