@@ -1,6 +1,5 @@
 import socketserver
 
-from util import websocket
 from util.user_actions import avatar_upload
 from util.github import authcallback,authgithub
 from util.user_actions import generateTwoFac
