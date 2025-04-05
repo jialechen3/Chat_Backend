@@ -1,6 +1,8 @@
 import base64
 import hashlib
+import json
 
+from util.response import Response
 
 
 def compute_accept(websocket):
@@ -11,12 +13,12 @@ def compute_accept(websocket):
     return accept_key
 
 class WebFrame:
-    def __init__(self, fin_bit, opcode, payload_length, payload):
+    def __init__(self, fin_bit, opcode, payload_length, payload, frame_length):
         self.fin_bit = fin_bit
         self.opcode = opcode
         self.payload_length = payload_length
         self.payload = payload
-
+        self.frame_length = frame_length
 
 def parse_ws_frame(socketframe_bytes):
     fin_bit = (socketframe_bytes[0] >> 7) & 1
@@ -37,14 +39,14 @@ def parse_ws_frame(socketframe_bytes):
         masking_key = socketframe_bytes[index:index + 4]
         index += 4
     payloads = socketframe_bytes[index:index + payload_length]
-
+    frame_length = index + payload_length
     if mask_bit and masking_key:
         unmasked_payload = bytearray()
         for i in range(payload_length):
             unmasked_payload.append(payloads[i] ^ masking_key[i % 4])
         payloads = unmasked_payload
 
-    return WebFrame(fin_bit, opcode, payload_length, payloads)
+    return WebFrame(fin_bit, opcode, payload_length, payloads, frame_length)
 
 
 def generate_ws_frame(payload):
@@ -68,7 +70,7 @@ def generate_ws_frame(payload):
 
     return bytes(frame_header)
 #to get websocket handshake request, get the websocket key from request.headers
-#computer acept the key
+#computer accept the key
 #set the response header and status code(101) like the slides
 #handler.send
 #have a loop to check alive(while True:) frame = handler.request.recv(2048)
@@ -77,5 +79,51 @@ def generate_ws_frame(payload):
 #store socket authen user sockets[user_id] = handler.request, after the handler.send
 #for socket in sockets: try/except
 
-#def make_connection(request, handler):
+def socket_message(request, handler):
+    res = Response()
+    sec_websocket_key = request.headers.get("Sec-WebSocket-Key")
+    accept = compute_accept(sec_websocket_key)
+    res.headers({"Upgrade": 'websocket'})
+    res.headers({"Connection": 'Upgrade'})
+
+    res.headers({"Sec-WebSocket-Accept": accept})
+    res.set_status(101, 'Switching Protocols')
+    handler.request.sendall(res.to_data())
+    buffer = b''
+    while True:
+        try:
+            data = handler.request.recv(2048)
+            if not data:
+                break
+            buffer += data
+            frame = parse_ws_frame(buffer)
+            while frame.payload_length > len(buffer):
+                # Wait for more data until we can get a complete frame
+                chunk = handler.request.recv(2048)
+                if not chunk:
+                    return
+                buffer += chunk
+                frame = parse_ws_frame(buffer)
+
+            if frame.opcode == 0x8:
+                return
+            buffer = b''  # remove full frame from buffer
+
+            try:
+                payload_str = frame.payload.decode()
+                msg = json.loads(payload_str)
+            except:
+                continue
+
+            if msg.get("messageType") == "echo_client":
+                response = {
+                    "messageType": "echo_server",
+                    "text": msg.get("text", "")
+                }
+                response_json = json.dumps(response).encode()
+                response_frame = generate_ws_frame(response_json)
+                handler.request.sendall(response_frame)
+        except:
+
+            continue
 

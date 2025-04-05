@@ -2,7 +2,6 @@ import socketserver
 
 from util.user_actions import avatar_upload
 from util.github import authcallback,authgithub
-from util.user_actions import generateTwoFac
 from util.chat import chat_create
 from util.chat import chat_get
 from util.chat import chat_delete
@@ -16,6 +15,7 @@ from util.request import Request
 from util.router import Router
 from util.tube_clone import video_upload, video_get_all, video_get_one, endpoint_transcription, set_thumbnail
 from util.user_actions import register, logout, login, get_me, search_user, update_profile
+from util.websockets import socket_message
 
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
@@ -84,7 +84,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/api/transcriptions/", endpoint_transcription, False)
 
         #######################Route websocket#################################
-        #self.router.add_route("GET", "/websocket", websocket, True)
+        self.router.add_route("GET", "/websocket", socket_message, True)
 
 
 

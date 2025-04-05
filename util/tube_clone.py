@@ -178,7 +178,6 @@ def _transcribe(id):
     audio_streams = [stream for stream in probe["streams"] if stream["codec_type"] == "audio"]
 
     if not audio_streams:
-        print("no audio streams")
         return False
 
     video = ffmpeg.input(video_path)
@@ -255,12 +254,10 @@ def extract_frames(filepath, num_frames=5, output_dir="public/imgs/thumbnails"):
 
 def set_thumbnail(request, handler):
     res = Response()
-    print('in the function')
     video_id = request.path.split("/")[3]
     body = request.body.decode()
     url = json.loads(body).get("thumbnailURL")
 
-    print(url)
     video_collection.update_one({'id': video_id}, {'$set': {'thumbnailURL': url}})
     res.json({'message': 'change thumbnail success'})
     handler.request.sendall(res.to_data())
