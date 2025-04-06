@@ -98,7 +98,6 @@ def socket_message(request, handler):
             buffer += data
             frame = parse_ws_frame(buffer)
             while frame.payload_length > len(buffer):
-                # Wait for more data until we can get a complete frame
                 chunk = handler.request.recv(2048)
                 if not chunk:
                     return
@@ -107,7 +106,7 @@ def socket_message(request, handler):
 
             if frame.opcode == 0x8:
                 return
-            buffer = b''  # remove full frame from buffer
+            buffer = b''
 
             try:
                 payload_str = frame.payload.decode()
@@ -124,6 +123,5 @@ def socket_message(request, handler):
                 response_frame = generate_ws_frame(response_json)
                 handler.request.sendall(response_frame)
         except:
-
             continue
 
