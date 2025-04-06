@@ -78,8 +78,8 @@ def generate_ws_frame(payload):
 #if payload got not equal to length, buffer
 #store socket authen user sockets[user_id] = handler.request, after the handler.send
 #for socket in sockets: try/except
-
-def socket_message(request, handler):
+sockets = {}
+def socket_function(request, handler):
     res = Response()
     sec_websocket_key = request.headers.get("Sec-WebSocket-Key")
     accept = compute_accept(sec_websocket_key)
@@ -122,6 +122,14 @@ def socket_message(request, handler):
                 response_json = json.dumps(response).encode()
                 response_frame = generate_ws_frame(response_json)
                 handler.request.sendall(response_frame)
+            elif msg.get("messageType") == "drawing":
+                response = msg
+                response_json = json.dumps(response).encode()
+                response_frame = generate_ws_frame(response_json)
+                handler.request.sendall(response_frame)
+                msg.pop("messageType", None)
+
+
         except:
             continue
 
