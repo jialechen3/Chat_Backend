@@ -110,9 +110,6 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                 received_data += chunk
                 request = Request(received_data)
 
-
-
-
         self.router.route_request(request, self)
 
 

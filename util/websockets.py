@@ -2,7 +2,9 @@ import base64
 import hashlib
 import json
 
+from util.database import drawing_collection, user_collection
 from util.response import Response
+
 
 
 def compute_accept(websocket):
@@ -81,14 +83,37 @@ def generate_ws_frame(payload):
 sockets = {}
 def socket_function(request, handler):
     res = Response()
+    ##########set up database################
+    if not drawing_collection.find_one({"strokes": {"$exists": True}}):
+        drawing_collection.insert_one({"strokes": []})
     sec_websocket_key = request.headers.get("Sec-WebSocket-Key")
     accept = compute_accept(sec_websocket_key)
     res.headers({"Upgrade": 'websocket'})
     res.headers({"Connection": 'Upgrade'})
-
     res.headers({"Sec-WebSocket-Accept": accept})
     res.set_status(101, 'Switching Protocols')
+    #########WS connection made###################
     handler.request.sendall(res.to_data())
+    ###########Sends the drawing history############
+    stro = drawing_collection.find_one({"strokes": {"$exists": True}})
+    strokes = stro["strokes"]
+    response = {
+        "messageType": "init_strokes",
+        "strokes": strokes
+    }
+    response_json = json.dumps(response).encode()
+    response_frame = generate_ws_frame(response_json)
+    handler.request.sendall(response_frame)
+
+
+
+    ################stores the connection######################
+    auth_token = request.cookies.get('auth_token')
+    hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
+    user = user_collection.find_one({"auth_token": hashed_token})
+    sockets[user['userid']] = handler.request
+
+
     buffer = b''
     while True:
         try:
@@ -126,9 +151,16 @@ def socket_function(request, handler):
                 response = msg
                 response_json = json.dumps(response).encode()
                 response_frame = generate_ws_frame(response_json)
-                handler.request.sendall(response_frame)
+                for user_id, sock in list(sockets.items()):
+                    try:
+                        sock.sendall(response_frame)
+                    except:
+                        del sockets[user_id]
                 msg.pop("messageType", None)
-
+                drawing_collection.update_one(
+                    {"strokes": {"$exists": True}},
+                    {"$push": {"strokes": msg}}
+                )
 
         except:
             continue
