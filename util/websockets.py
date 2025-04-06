@@ -144,6 +144,7 @@ def socket_function(request, handler):
 
             if frame.opcode == 0x8:
                 #######################Update userlist#########################
+                del sockets[user['userid']]
                 user_ids = list(sockets.keys())
                 users_data = user_collection.find({"userid": {"$in": user_ids}}, {"_id": 0, "username": 1})
                 user_list = [{"username": user["username"]} for user in users_data]
