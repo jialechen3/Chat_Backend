@@ -112,6 +112,19 @@ def socket_function(request, handler):
     hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
     user = user_collection.find_one({"auth_token": hashed_token})
     sockets[user['userid']] = handler.request
+    #######################Update userlist#########################
+    user_ids = list(sockets.keys())
+    users_data = user_collection.find({"userid": {"$in": user_ids}}, {"_id": 0, "username": 1})
+    user_list = [{"username": user["username"]} for user in users_data]
+    response = {"messageType": "active_users_list", "users": user_list}
+    response_json = json.dumps(response).encode()
+    response_frame = generate_ws_frame(response_json)
+    for user_id, sock in list(sockets.items()):
+        try:
+            sock.sendall(response_frame)
+        except:
+            del sockets[user_id]
+
 
 
     buffer = b''
@@ -130,6 +143,18 @@ def socket_function(request, handler):
                 frame = parse_ws_frame(buffer)
 
             if frame.opcode == 0x8:
+                #######################Update userlist#########################
+                user_ids = list(sockets.keys())
+                users_data = user_collection.find({"userid": {"$in": user_ids}}, {"_id": 0, "username": 1})
+                user_list = [{"username": user["username"]} for user in users_data]
+                response = {"messageType": "active_users_list", "users": user_list}
+                response_json = json.dumps(response).encode()
+                response_frame = generate_ws_frame(response_json)
+                for user_id, sock in list(sockets.items()):
+                    try:
+                        sock.sendall(response_frame)
+                    except:
+                        del sockets[user_id]
                 return
             buffer = b''
 
