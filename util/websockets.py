@@ -191,3 +191,10 @@ def socket_function(request, handler):
         except:
             continue
 
+#AO testing: while connection open
+# grab bytes check payload length
+# check bytes you have stores extra for later use
+# check for header length too
+# continouation frame: check finbit or save for later
+# only handle one frame per loop
+# ao 1 testing: go to front code where is sends the message duplicate it three times, it becomes back to back frame
