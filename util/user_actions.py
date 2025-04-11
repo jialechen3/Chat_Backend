@@ -162,8 +162,7 @@ def get_me(request, handler):
         user = user_collection.find_one({"auth_token": hashed_token})
         user_profile = {
             "username": user["username"],
-            "id": user["userid"],
-            "imageURL": user["imageURL"]
+            "id": user["userid"]
         }
         res.json(user_profile)
         handler.request.sendall(res.to_data())

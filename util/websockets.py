@@ -71,16 +71,11 @@ def generate_ws_frame(payload):
     frame_header.extend(payload)
 
     return bytes(frame_header)
-#to get websocket handshake request, get the websocket key from request.headers
-#computer accept the key
-#set the response header and status code(101) like the slides
-#handler.send
-#have a loop to check alive(while True:) frame = handler.request.recv(2048)
-#parse the frame
-#if payload got not equal to length, buffer
-#store socket authen user sockets[user_id] = handler.request, after the handler.send
-#for socket in sockets: try/except
+
+
+
 sockets = {}
+frames = []
 def socket_function(request, handler):
     res = Response()
     ##########set up database################
@@ -125,8 +120,6 @@ def socket_function(request, handler):
         except:
             del sockets[user_id]
 
-
-
     buffer = b''
     while True:
         try:
@@ -134,61 +127,67 @@ def socket_function(request, handler):
             if not data:
                 break
             buffer += data
-            frame = parse_ws_frame(buffer)
-            while frame.payload_length > len(buffer):
-                chunk = handler.request.recv(2048)
-                if not chunk:
-                    return
-                buffer += chunk
+
+
+            while True:
                 frame = parse_ws_frame(buffer)
+                if frame is None:
+                    break
+                while frame.payload_length > len(buffer):
+                    chunk = handler.request.recv(2048)
+                    if not chunk:
+                        return
+                    buffer += chunk
+                    frame = parse_ws_frame(buffer)
+                buffer = buffer[frame.frame_length:]
 
-            if frame.opcode == 0x8:
-                #######################Update userlist#########################
-                del sockets[user['userid']]
-                user_ids = list(sockets.keys())
-                users_data = user_collection.find({"userid": {"$in": user_ids}}, {"_id": 0, "username": 1})
-                user_list = [{"username": user["username"]} for user in users_data]
-                response = {"messageType": "active_users_list", "users": user_list}
-                response_json = json.dumps(response).encode()
-                response_frame = generate_ws_frame(response_json)
-                for user_id, sock in list(sockets.items()):
-                    try:
-                        sock.sendall(response_frame)
-                    except:
-                        del sockets[user_id]
-                return
-            buffer = b''
+                if frame.opcode == 0x8:
+                    del sockets[user['userid']]
+                    user_ids = list(sockets.keys())
+                    users_data = user_collection.find({"userid": {"$in": user_ids}}, {"_id": 0, "username": 1})
+                    user_list = [{"username": user["username"]} for user in users_data]
+                    response = {"messageType": "active_users_list", "users": user_list}
+                    response_json = json.dumps(response).encode()
+                    response_frame = generate_ws_frame(response_json)
+                    for user_id, sock in list(sockets.items()):
+                        try:
+                            sock.sendall(response_frame)
+                        except:
+                            del sockets[user_id]
+                    return
 
-            try:
-                payload_str = frame.payload.decode()
-                msg = json.loads(payload_str)
-            except:
-                continue
+                try:
+                    payload_str = frame.payload.decode()
+                    msg = json.loads(payload_str)
+                except:
+                    continue
 
-            if msg.get("messageType") == "echo_client":
-                response = {
-                    "messageType": "echo_server",
-                    "text": msg.get("text", "")
-                }
-                response_json = json.dumps(response).encode()
-                response_frame = generate_ws_frame(response_json)
-                handler.request.sendall(response_frame)
-            elif msg.get("messageType") == "drawing":
-                response = msg
-                response_json = json.dumps(response).encode()
-                response_frame = generate_ws_frame(response_json)
-                for user_id, sock in list(sockets.items()):
-                    try:
-                        sock.sendall(response_frame)
-                    except:
-                        del sockets[user_id]
-                msg.pop("messageType", None)
-                drawing_collection.update_one(
-                    {"strokes": {"$exists": True}},
-                    {"$push": {"strokes": msg}}
-                )
+                if msg.get("messageType") == "echo_client":
+                    print('creating response')
+                    response = {
+                        "messageType": "echo_server",
+                        "text": msg.get("text", "")
+                    }
+                    response_json = json.dumps(response).encode()
+                    response_frame = generate_ws_frame(response_json)
+                    handler.request.sendall(response_frame)
+                elif msg.get("messageType") == "drawing":
+                    response = msg
+                    response_json = json.dumps(response).encode()
+                    response_frame = generate_ws_frame(response_json)
+                    for user_id, sock in list(sockets.items()):
+                        try:
+                            sock.sendall(response_frame)
+                        except:
+                            del sockets[user_id]
+                    msg.pop("messageType", None)
+                    drawing_collection.update_one(
+                        {"strokes": {"$exists": True}},
+                        {"$push": {"strokes": msg}}
+                    )
 
-        except:
+        except Exception as e:
+            print("WebSocket error:", e)
             continue
 
 #AO testing: while connection open
