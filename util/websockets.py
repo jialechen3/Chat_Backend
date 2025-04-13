@@ -1,8 +1,8 @@
 import base64
 import hashlib
 import json
-
-from util.database import drawing_collection, user_collection
+from datetime import datetime, timezone
+from util.database import drawing_collection, user_collection, dm_collection
 from util.response import Response
 
 
@@ -106,6 +106,7 @@ def socket_function(request, handler):
     auth_token = request.cookies.get('auth_token')
     hashed_token = hashlib.sha256(auth_token.encode()).hexdigest()
     user = user_collection.find_one({"auth_token": hashed_token})
+    ###########id: request###################
     sockets[user['userid']] = handler.request
     #######################Update userlist#########################
     user_ids = list(sockets.keys())
@@ -121,6 +122,8 @@ def socket_function(request, handler):
             del sockets[user_id]
 
     buffer = b''
+    payloads_buffer = b''
+    isContinuous = False
     while True:
         try:
             data = handler.request.recv(2048)
@@ -133,6 +136,7 @@ def socket_function(request, handler):
                 frame = parse_ws_frame(buffer)
                 if frame is None:
                     break
+
                 while frame.payload_length > len(buffer):
                     chunk = handler.request.recv(2048)
                     if not chunk:
@@ -140,11 +144,16 @@ def socket_function(request, handler):
                     buffer += chunk
                     frame = parse_ws_frame(buffer)
                 buffer = buffer[frame.frame_length:]
-
+                if frame.fin_bit == 0:
+                    payloads_buffer += frame.payload
+                    isContinuous = True
+                    continue
+                if isContinuous:
+                    payloads_buffer += frame.payload
                 if frame.opcode == 0x8:
                     del sockets[user['userid']]
                     user_ids = list(sockets.keys())
-                    users_data = user_collection.find({"userid": {"$in": user_ids}}, {"_id": 0, "username": 1})
+                    users_data = user_collection.find({"userid": {"$in": user_ids}})
                     user_list = [{"username": user["username"]} for user in users_data]
                     response = {"messageType": "active_users_list", "users": user_list}
                     response_json = json.dumps(response).encode()
@@ -157,13 +166,17 @@ def socket_function(request, handler):
                     return
 
                 try:
-                    payload_str = frame.payload.decode()
+                    #if continuous read from the payload buffer array
+                    if isContinuous:
+                        payload_str = payloads_buffer.decode()
+                    else:
+                        payload_str = frame.payload.decode()
                     msg = json.loads(payload_str)
+                    payloads_buffer = b''
                 except:
                     continue
 
                 if msg.get("messageType") == "echo_client":
-                    print('creating response')
                     response = {
                         "messageType": "echo_server",
                         "text": msg.get("text", "")
@@ -175,6 +188,7 @@ def socket_function(request, handler):
                     response = msg
                     response_json = json.dumps(response).encode()
                     response_frame = generate_ws_frame(response_json)
+                    #handler.request.sendall(response_frame)
                     for user_id, sock in list(sockets.items()):
                         try:
                             sock.sendall(response_frame)
@@ -185,6 +199,64 @@ def socket_function(request, handler):
                         {"strokes": {"$exists": True}},
                         {"$push": {"strokes": msg}}
                     )
+                elif msg.get("messageType") == "get_all_users":
+                    users = user_collection.find({})
+                    user_list = [{"username": user["username"]} for user in users]
+
+                    response = {"messageType": "all_users_list", "users": user_list}
+                    response_json = json.dumps(response).encode()
+                    response_frame = generate_ws_frame(response_json)
+                    handler.request.sendall(response_frame)
+                elif msg.get("messageType") == "direct_message":
+                    current_user = user["username"]
+                    response = {
+                        "messageType": "direct_message",
+                        "fromUser": current_user,
+                        "text": msg.get("text", "")
+                    }
+                    dm_collection.insert_one({
+                        "fromUser": current_user,
+                        "toUser": msg.get("targetUser",""),
+                        "text": msg.get("text", ""),
+                        "timestamp": datetime.now(timezone.utc)
+                    })
+                    ####send the dm to both clients
+                    for user_id, sock in list(sockets.items()):
+
+                        user = user_collection.find_one({"userid": user_id})
+                        if user["username"] == current_user or user["username"] == msg.get("targetUser"):
+                            response_json = json.dumps(response).encode()
+                            response_frame = generate_ws_frame(response_json)
+                            sock.sendall(response_frame)
+
+                elif msg.get("messageType") == "select_user":
+                    current_user = user["username"]
+                    target_user = msg.get("targetUser", "")
+                    if target_user == current_user:
+                        return
+                    ##############Getting all the direct message data from the two users only
+                    messages = dm_collection.find(
+                        {
+                            "$or": [
+                                {"fromUser": current_user, "toUser": target_user},
+                                {"fromUser": target_user, "toUser": current_user}
+                            ]
+                        }
+                    ).sort("timestamp", 1)
+
+                    message_list = []
+                    for msg in messages:
+                        message_list.append({
+                            "messageType": "direct_message",
+                            "fromUser": msg["fromUser"],
+                            "text": msg["text"]
+                        })
+                    response = { "messageType": "message_history",
+                                 "messages": message_list}
+                    response_json = json.dumps(response).encode()
+                    response_frame = generate_ws_frame(response_json)
+                    handler.request.sendall(response_frame)
+
 
         except Exception as e:
             print("WebSocket error:", e)
