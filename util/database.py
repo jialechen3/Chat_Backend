@@ -20,6 +20,7 @@ user_collection = db["user"]
 video_collection = db["video"]
 drawing_collection = db["drawing"]
 dm_collection = db["dms"]
+zoom_collection = db["zoom"]
 
 
 

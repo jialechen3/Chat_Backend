@@ -16,6 +16,7 @@ from util.router import Router
 from util.tube_clone import video_upload, video_get_all, video_get_one, endpoint_transcription, set_thumbnail
 from util.user_actions import register, logout, login, get_me, search_user, update_profile
 from util.websockets import socket_function
+from util.zoom_clone import videocall
 
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
@@ -40,8 +41,9 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/test-websocket", render, True)
         self.router.add_route("GET", "/drawing-board", render, True)
         self.router.add_route("GET", "/direct-messaging", render, True)
-        self.router.add_route("GET", "/video-call", render, True)
         self.router.add_route("GET", "/video-call/", render, False)
+        self.router.add_route("GET", "/video-call", render, True)
+
 
 
 
@@ -89,6 +91,8 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         self.router.add_route("GET", "/drawing-board", socket_function, True)
 
 
+        ########################Zoom#########################################
+        self.router.add_route("POST", "/api/video-call", videocall, False)
 
 
 

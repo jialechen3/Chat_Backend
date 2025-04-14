@@ -1,8 +1,9 @@
 import base64
 import hashlib
 import json
+import uuid
 from datetime import datetime, timezone
-from util.database import drawing_collection, user_collection, dm_collection
+from util.database import drawing_collection, user_collection, dm_collection, zoom_collection
 from util.response import Response
 
 
@@ -75,8 +76,11 @@ def generate_ws_frame(payload):
 
 
 sockets = {}
+incall_sockets = {}
 frames = []
+
 def socket_function(request, handler):
+    random_id = ''
     res = Response()
     ##########set up database################
     if not drawing_collection.find_one({"strokes": {"$exists": True}}):
@@ -110,7 +114,7 @@ def socket_function(request, handler):
     sockets[user['userid']] = handler.request
     #######################Update userlist#########################
     user_ids = list(sockets.keys())
-    users_data = user_collection.find({"userid": {"$in": user_ids}}, {"_id": 0, "username": 1})
+    users_data = user_collection.find({"userid": {"$in": user_ids}})
     user_list = [{"username": user["username"]} for user in users_data]
     response = {"messageType": "active_users_list", "users": user_list}
     response_json = json.dumps(response).encode()
@@ -133,6 +137,8 @@ def socket_function(request, handler):
 
 
             while True:
+                if len(buffer) < 2:
+                    break
                 frame = parse_ws_frame(buffer)
                 if frame is None:
                     break
@@ -151,6 +157,25 @@ def socket_function(request, handler):
                 if isContinuous:
                     payloads_buffer += frame.payload
                 if frame.opcode == 0x8:
+                    ##########Clean up zoom room#######################################################################
+                    call_id = incall_sockets[random_id]["callId"]
+                    print('id to be delete', random_id)
+                    zoom_collection.update_one(
+                        {"id": call_id},
+                        {"$pull": {"sockets": random_id}}
+                    )
+                    del incall_sockets[random_id]
+                    room = zoom_collection.find_one({"id": call_id})
+                    user_left_msg = {
+                        "messageType": "user_left",
+                        "socketId": random_id
+                    }
+                    msg_bytes = generate_ws_frame(json.dumps(user_left_msg).encode())
+                    for s_id in room["sockets"]:
+                        if s_id in incall_sockets:
+                            incall_sockets[s_id]["socket"].sendall(msg_bytes)
+
+                    ######################################################################################################
                     del sockets[user['userid']]
                     user_ids = list(sockets.keys())
                     users_data = user_collection.find({"userid": {"$in": user_ids}})
@@ -173,8 +198,10 @@ def socket_function(request, handler):
                         payload_str = frame.payload.decode()
                     msg = json.loads(payload_str)
                     payloads_buffer = b''
-                except:
+                except :
                     continue
+
+
 
                 if msg.get("messageType") == "echo_client":
                     response = {
@@ -199,6 +226,9 @@ def socket_function(request, handler):
                         {"strokes": {"$exists": True}},
                         {"$push": {"strokes": msg}}
                     )
+
+
+                #################for dms###############################
                 elif msg.get("messageType") == "get_all_users":
                     users = user_collection.find({})
                     user_list = [{"username": user["username"]} for user in users]
@@ -245,11 +275,11 @@ def socket_function(request, handler):
                     ).sort("timestamp", 1)
 
                     message_list = []
-                    for msg in messages:
+                    for ms in messages:
                         message_list.append({
                             "messageType": "direct_message",
-                            "fromUser": msg["fromUser"],
-                            "text": msg["text"]
+                            "fromUser": ms["fromUser"],
+                            "text": ms["text"]
                         })
                     response = { "messageType": "message_history",
                                  "messages": message_list}
@@ -257,10 +287,73 @@ def socket_function(request, handler):
                     response_frame = generate_ws_frame(response_json)
                     handler.request.sendall(response_frame)
 
+                    #####################for zoom##############################
+                elif msg.get("messageType") == "get_calls":
+                    all_rooms = []
+                    room_data = zoom_collection.find({})
+                    for room in room_data:
+                        all_rooms.append({"id": room["id"], "name": room["name"]})
+                    response = {"messageType": "call_list",
+                                "calls": all_rooms}
+                    response_json = json.dumps(response).encode()
+                    response_frame = generate_ws_frame(response_json)
+                    handler.request.sendall(response_frame)
+                elif msg.get("messageType") == "join_call":
+                    # contains: {"messageType":"join_call", "callId":"67e426f9042e96b4cfaa70f2"}
+                    # Sent by your server when a user joins a call. Contains the name of the room
+                    # return: {"messageType":"call_info", "name":"meeting"}
+
+                    room = zoom_collection.find_one({"id": msg.get("callId")})
+                    response = {"messageType": "call_info",
+                                "name": room['name']}
+                    response_json = json.dumps(response).encode()
+                    response_frame = generate_ws_frame(response_json)
+                    handler.request.sendall(response_frame)
+                    # another return: {"messageType": "existing_participants", "participants": [{"socketId": "febd4d3a-9e61-4a95-8e52-37ba64e2674c", "username": "admin"}, ... ]}
+                    user_list = []
+                    for socket_id, info in incall_sockets.items():
+                        user_list.append({
+                            "socketId": str(socket_id),
+                            "username": info["username"]
+                        })
+                    random_id = str(uuid.uuid4())
+                    zoom_collection.update_one({"id": msg.get("callId")}, {"$push": {"sockets": str(random_id)}})
+                    room = zoom_collection.find_one({"id": msg.get("callId")})
+                    incall_sockets[random_id] = {
+                        "username": user["username"],
+                        "socket": handler.request,
+                        "callId": msg.get("callId")
+                    }
+                    socket = incall_sockets[random_id]["socket"]
+                    response = {"messageType": "existing_participants", "participants": user_list}
+                    print(response)
+                    response_json = json.dumps(response).encode()
+                    response_frame = generate_ws_frame(response_json)
+                    socket.sendall(response_frame)
+                    ##########Boardcast to all users in the room############################
+                    # Get all the sockets stores in the room db
+                    # {"messageType": "user_joined", "socketId": "0a8e1a10-7f20-4797-bd3e-628735f91216", "username": "jesse"}
+                    response = {"messageType": "user_joined", "socketId": random_id, "username": user["username"]}
+                    for socket_id in room["sockets"]:
+                        if socket_id != random_id:
+                            frame = generate_ws_frame(json.dumps(response).encode())
+                            incall_sockets[socket_id]["socket"].sendall(frame)
+
+                    # messageType - "offer", "answer", and "ice_candidate"
+                elif msg.get("messageType") in ["offer", "answer", "ice_candidate"]:
+                    target_id = msg.get("socketId")
+                    target = incall_sockets[target_id]["socket"]
+                    to_sent = msg.copy()
+                    to_sent["socketId"] = random_id
+                    to_sent["username"] = user["username"]
+                    response_json = json.dumps(to_sent).encode()
+                    response_frame = generate_ws_frame(response_json)
+                    target.sendall(response_frame)
+
 
         except Exception as e:
-            print("WebSocket error:", e)
             continue
+
 
 #AO testing: while connection open
 # grab bytes check payload length
