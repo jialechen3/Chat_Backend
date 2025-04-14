@@ -159,21 +159,22 @@ def socket_function(request, handler):
                     payloads_buffer += frame.payload
                 if frame.opcode == 0x8:
                     ##########Clean up zoom room#######################################################################
-                    call_id = incall_sockets[random_id]["callId"]
-                    zoom_collection.update_one(
-                        {"id": call_id},
-                        {"$pull": {"sockets": random_id}}
-                    )
-                    del incall_sockets[random_id]
-                    room = zoom_collection.find_one({"id": call_id})
-                    user_left_msg = {
-                        "messageType": "user_left",
-                        "socketId": random_id
-                    }
-                    msg_bytes = generate_ws_frame(json.dumps(user_left_msg).encode())
-                    for s_id in room["sockets"]:
-                        if s_id in incall_sockets:
-                            incall_sockets[s_id]["socket"].sendall(msg_bytes)
+                    if random_id != '':
+                        call_id = incall_sockets[random_id]["callId"]
+                        zoom_collection.update_one(
+                            {"id": call_id},
+                            {"$pull": {"sockets": random_id}}
+                        )
+                        del incall_sockets[random_id]
+                        room = zoom_collection.find_one({"id": call_id})
+                        user_left_msg = {
+                            "messageType": "user_left",
+                            "socketId": random_id
+                        }
+                        msg_bytes = generate_ws_frame(json.dumps(user_left_msg).encode())
+                        for s_id in room["sockets"]:
+                            if s_id in incall_sockets:
+                                incall_sockets[s_id]["socket"].sendall(msg_bytes)
 
                     ######################################################################################################
                     del sockets[user['userid']]
