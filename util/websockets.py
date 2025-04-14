@@ -312,10 +312,11 @@ def socket_function(request, handler):
                     # another return: {"messageType": "existing_participants", "participants": [{"socketId": "febd4d3a-9e61-4a95-8e52-37ba64e2674c", "username": "admin"}, ... ]}
                     user_list = []
                     for socket_id, info in incall_sockets.items():
-                        user_list.append({
-                            "socketId": str(socket_id),
-                            "username": info["username"]
-                        })
+                        if info.get("callId") == msg.get("callId"):
+                            user_list.append({
+                                "socketId": str(socket_id),
+                                "username": info["username"]
+                            })
                     random_id = str(uuid.uuid4())
                     zoom_collection.update_one({"id": msg.get("callId")}, {"$push": {"sockets": str(random_id)}})
                     room = zoom_collection.find_one({"id": msg.get("callId")})
