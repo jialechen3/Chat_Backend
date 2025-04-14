@@ -159,7 +159,6 @@ def socket_function(request, handler):
                 if frame.opcode == 0x8:
                     ##########Clean up zoom room#######################################################################
                     call_id = incall_sockets[random_id]["callId"]
-                    print('id to be delete', random_id)
                     zoom_collection.update_one(
                         {"id": call_id},
                         {"$pull": {"sockets": random_id}}
@@ -327,7 +326,6 @@ def socket_function(request, handler):
                     }
                     socket = incall_sockets[random_id]["socket"]
                     response = {"messageType": "existing_participants", "participants": user_list}
-                    print(response)
                     response_json = json.dumps(response).encode()
                     response_frame = generate_ws_frame(response_json)
                     socket.sendall(response_frame)
