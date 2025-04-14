@@ -245,6 +245,7 @@ def socket_function(request, handler):
                         "fromUser": current_user,
                         "text": msg.get("text", "")
                     }
+
                     dm_collection.insert_one({
                         "fromUser": current_user,
                         "toUser": msg.get("targetUser",""),
@@ -253,13 +254,12 @@ def socket_function(request, handler):
                     })
                     ####send the dm to both clients
                     for user_id, info in list(dms_sockets.items()):
-                        user = user_collection.find_one({"userid": user_id})
+                        user_data = user_collection.find_one({"userid": user_id})
                         target = info.get("target")
-
                         if (
-                                (user["username"] == current_user and target == msg.get("targetUser"))
+                                (user_data["username"] == current_user and target == msg.get("targetUser"))
                                 or
-                                (user["username"] == msg.get("targetUser") and target == current_user)
+                                (user_data["username"] == msg.get("targetUser") and target == current_user)
                         ):
                             response_json = json.dumps(response).encode()
                             response_frame = generate_ws_frame(response_json)
@@ -272,7 +272,11 @@ def socket_function(request, handler):
                         return
                     #store this dms socket
 
-                    dms_sockets[user["userid"]] = {"socket": handler.request, "target": target_user}
+                    if user["userid"] not in dms_sockets:
+                        dms_sockets[user["userid"]] = {"socket": handler.request}
+
+
+                    dms_sockets[user["userid"]]["target"] = target_user
 
                     ##############Getting all the direct message data from the two users only
                     messages = dm_collection.find(
