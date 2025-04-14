@@ -76,8 +76,8 @@ def generate_ws_frame(payload):
 
 
 sockets = {}
-incall_sockets = {}
 frames = []
+incall_sockets = {}
 
 def socket_function(request, handler):
     random_id = ''
