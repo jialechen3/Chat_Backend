@@ -252,15 +252,14 @@ def socket_function(request, handler):
                         "text": msg.get("text", ""),
                         "timestamp": datetime.now(timezone.utc)
                     })
+                    response_json = json.dumps(response).encode()
+                    response_frame = generate_ws_frame(response_json)
+                    handler.request.sendall(response_frame)
                     ####send the dm to both clients
                     for user_id, info in list(dms_sockets.items()):
                         user_data = user_collection.find_one({"userid": user_id})
-                        target = info.get("target")
-                        if (
-                                (user_data["username"] == current_user and target == msg.get("targetUser"))
-                                or
-                                (user_data["username"] == msg.get("targetUser") and target == current_user)
-                        ):
+                        target = info.get("target")  #the target should point to current user(from the dm_target)
+                        if user_data["username"] == msg.get("targetUser") and target == current_user:
                             response_json = json.dumps(response).encode()
                             response_frame = generate_ws_frame(response_json)
                             info["socket"].sendall(response_frame)
