@@ -76,6 +76,7 @@ def generate_ws_frame(payload):
 
 
 sockets = {}
+dms_sockets = {}
 frames = []
 incall_sockets = {}
 
@@ -250,19 +251,28 @@ def socket_function(request, handler):
                         "timestamp": datetime.now(timezone.utc)
                     })
                     ####send the dm to both clients
-                    for user_id, sock in list(sockets.items()):
-
+                    for user_id, info in list(dms_sockets.items()):
                         user = user_collection.find_one({"userid": user_id})
-                        if user["username"] == current_user or user["username"] == msg.get("targetUser"):
+                        target = info.get("target")
+
+                        if (
+                                (user["username"] == current_user and target == msg.get("targetUser"))
+                                or
+                                (user["username"] == msg.get("targetUser") and target == current_user)
+                        ):
                             response_json = json.dumps(response).encode()
                             response_frame = generate_ws_frame(response_json)
-                            sock.sendall(response_frame)
+                            info["socket"].sendall(response_frame)
 
                 elif msg.get("messageType") == "select_user":
                     current_user = user["username"]
                     target_user = msg.get("targetUser", "")
                     if target_user == current_user:
                         return
+                    #store this dms socket
+
+                    dms_sockets[user["userid"]] = {"socket": handler.request, "target": target_user}
+
                     ##############Getting all the direct message data from the two users only
                     messages = dm_collection.find(
                         {
