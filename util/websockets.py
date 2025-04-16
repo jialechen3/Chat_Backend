@@ -317,6 +317,7 @@ def socket_function(request, handler):
                     # return: {"messageType":"call_info", "name":"meeting"}
 
                     room = zoom_collection.find_one({"id": msg.get("callId")})
+
                     response = {"messageType": "call_info",
                                 "name": room['name']}
                     response_json = json.dumps(response).encode()
@@ -330,6 +331,7 @@ def socket_function(request, handler):
                                 "socketId": str(socket_id),
                                 "username": info["username"]
                             })
+
                     random_id = str(uuid.uuid4())
                     zoom_collection.update_one({"id": msg.get("callId")}, {"$push": {"sockets": str(random_id)}})
                     room = zoom_collection.find_one({"id": msg.get("callId")})
